@@ -220,5 +220,20 @@ that API becomes the script format and nothing is thrown away.
 - [ ] auto line weight / scale for small parts in SVG views
 - [ ] more example parts from real use, to shake out selector ergonomics
 
-Phase 2 next: drawing sheets with dimensions (draftwright / build123d-drafting-helpers), PDF,
-section views.
+## 10. Phase 2 status (2026-09-12)
+
+- [x] annotated drawing sheet via draftwright 0.4.28: third-angle views + iso, automatic
+      dimensions, hole/slot/radius/chamfer callouts, bolt-circle notes, title block; SVG/PDF/DXF
+- [x] section views (own renderer): cut at any PlaneRef, cut faces filled grey, PNG preview
+- [x] `title_block`, `projection`, `page`, `sheet`, `dimensions`, `sections` in `outputs.drawing`
+- [x] `--sheet/--no-sheet` CLI override; line weights scale with part size
+- [x] 32 tests; all examples build with sheets and sections
+
+Costs accepted: draftwright is AGPL-3 and pins build123d to 0.10 on Python 3.12 (0.11 only on
+Python 3.13+). All cadgen tests pass on 0.10. Moving the venv to Python 3.13 lifts the pin.
+
+Known gaps: sheet dimensions are automatic only (no way to say "dimension L here"); sections
+are separate files rather than placed on the sheet; no hatching, grey fill instead; draftwright
+takes 3 to 5 s per sheet.
+
+Phase 3 next: Fusion 360 native exporter (JSON -> Fusion API script with a real timeline).

@@ -169,7 +169,7 @@ def _face_plane_ref(face_sel):
 
 
 def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = None, stl: bool | None = None,
-                  png: bool | None = None, views: list[str] | None = None) -> list[Path]:
+                  png: bool | None = None, views: list[str] | None = None, sheet: bool | None = None) -> list[Path]:
     """Write the outputs requested by the document, with optional CLI overrides."""
     doc, part = result.document, result.part
     out = doc.outputs
@@ -177,6 +177,9 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
     name = doc.name
     files: list[Path] = []
     ctx = Context(doc.params, doc.units)
+
+    def faces(sel):
+        return Selection(part, ctx, result.builder.new_faces, result.builder.new_edges).faces(sel)
 
     if step if step is not None else out.step:
         files.append(export.write_step(part, out_dir / f"{name}.step"))
@@ -199,6 +202,26 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
                 files.append(export.write_view_svg(part, view, out_dir / f"{name}_{view}.svg", drawing.hidden_lines, scale))
             if "dxf" in drawing.format:
                 files.append(export.write_view_dxf(part, view, out_dir / f"{name}_{view}.dxf", drawing.hidden_lines))
+        for i, sec in enumerate(drawing.sections):
+            label = sec.name or chr(ord("A") + i)
+            try:
+                plane = resolve_plane(sec.plane, ctx, faces)
+                svg = export.write_section_svg(
+                    part, plane, out_dir / f"{name}_section_{label}.svg",
+                    flip=sec.flip, hidden=sec.hidden_lines, scale=scale,
+                )
+            except CadgenError as exc:
+                raise CadgenError(f"section {label}: {exc.message}", hints=exc.hints) from None
+            files.append(svg)
+            if png if png is not None else out.png:
+                files.append(export.svg_to_png(svg, svg.with_suffix(".png")))
+        if sheet if sheet is not None else drawing.sheet:
+            files.extend(export.write_sheet(
+                part, out_dir / f"{name}_drawing",
+                title=name, formats=drawing.format, dimensions=drawing.dimensions,
+                projection=drawing.projection, page=drawing.page,
+                scale=None if drawing.scale == "auto" else scale, title_block=drawing.title_block,
+            ))
 
     if png if png is not None else out.png:
         preview_views = view_names or ["iso"]

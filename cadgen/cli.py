@@ -50,8 +50,9 @@ def validate(parts: tuple[Path, ...]) -> None:
 @click.option("--stl/--no-stl", default=None, help="override the document's STL setting")
 @click.option("--png/--no-png", default=None, help="override the document's PNG preview setting")
 @click.option("--views", default=None, help="comma-separated views, e.g. front,top,right,iso (overrides the document)")
+@click.option("--sheet/--no-sheet", default=None, help="override the document's drawing-sheet setting")
 @click.option("--flat", is_flag=True, help="write into OUT directly instead of OUT/<name>/")
-def build(parts, out_dir: Path, step, stl, png, views, flat) -> None:
+def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
     """Build PARTS: run the feature tree and write the requested outputs."""
     from cadgen.build import build_document, load_document, write_outputs
 
@@ -62,7 +63,7 @@ def build(parts, out_dir: Path, step, stl, png, views, flat) -> None:
             doc = load_document(path)
             result = build_document(doc)
             target = out_dir if flat else out_dir / doc.name
-            files = write_outputs(result, target, step=step, stl=stl, png=png, views=view_list)
+            files = write_outputs(result, target, step=step, stl=stl, png=png, views=view_list, sheet=sheet)
             click.echo(result.summary())
             for f in files:
                 click.echo(f"  wrote {f}")

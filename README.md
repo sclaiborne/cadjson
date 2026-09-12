@@ -12,9 +12,12 @@ Engine: [build123d](https://build123d.readthedocs.io/) on the OpenCascade kernel
 
 ## Status
 
-Phase 1: the feature tree builds and exports. Drawings have views with hidden lines but no
-dimensions yet (Phase 2). See [PLANNING.md](PLANNING.md) for the option survey and plan, and
-[docs/schema-v0.md](docs/schema-v0.md) for the format.
+Phases 1 and 2 done: the feature tree builds and exports, and drawings include per-view
+SVG/DXF with hidden lines, section views, and a fully annotated sheet (dimensions, callouts,
+title block) as PDF/SVG/DXF. See [PLANNING.md](PLANNING.md) for the option survey and plan,
+and [docs/schema-v0.md](docs/schema-v0.md) for the format.
+
+Note: the sheet generator (draftwright, AGPL-3) pins build123d to 0.10 on Python 3.12.
 
 ## Usage
 
@@ -26,9 +29,9 @@ dimensions yet (Phase 2). See [PLANNING.md](PLANNING.md) for the option survey a
 .venv\Scripts\cadgen schema > cadgen.schema.json
 ```
 
-`build` writes to `out/<name>/`: STEP, STL, one SVG per view, and PNG previews. Each part's
-`outputs` block sets the defaults; `--step/--no-step`, `--stl/--no-stl`, `--png/--no-png`,
-`--views` and `-o` override them.
+`build` writes to `out/<name>/`: STEP, STL, one SVG per view, section views, the drawing
+sheet, and PNG previews. Each part's `outputs` block sets the defaults; `--step/--no-step`,
+`--stl/--no-stl`, `--png/--no-png`, `--sheet/--no-sheet`, `--views` and `-o` override them.
 
 ## Layout
 

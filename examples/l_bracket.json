@@ -56,5 +56,8 @@
     }
   ],
 
-  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true, "dimensions": true } }
+  "outputs": { "step": true, "stl": true,
+    "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true,
+                 "sheet": true, "dimensions": true, "format": ["svg", "pdf"],
+                 "title_block": { "number": "CG-002", "drawn_by": "cadgen" } } }
 }

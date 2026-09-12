@@ -51,6 +51,10 @@
   "outputs": {
     "step": true,
     "stl": { "tolerance": 0.01 },
-    "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true, "dimensions": true }
+    "drawing": {
+      "views": ["front", "top", "right", "iso"], "hidden_lines": true,
+      "sheet": true, "dimensions": true, "format": ["svg", "pdf"],
+      "title_block": { "number": "CG-001", "drawn_by": "cadgen", "material": "PLA" }
+    }
   }
 }

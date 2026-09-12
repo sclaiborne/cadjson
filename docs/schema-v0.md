@@ -1,7 +1,7 @@
 # cadgen schema v0
 
-Status: implemented in Phase 1 (2026-09-12) for everything below except `dimensions`, `pdf`,
-and `section` views, which are Phase 2. Examples in `examples/` build with `cadgen build`.
+Status: implemented (Phases 1 and 2, 2026-09-12). Examples in `examples/` build with
+`cadgen build`.
 `cadgen schema` prints the machine-readable JSON Schema generated from the same models.
 
 Design rule: **the numbers a person would write on a sketch are the numbers in the file.**
@@ -257,17 +257,38 @@ centre, and size, which is the quickest way to work out a selector.
   "stl":  { "tolerance": 0.01, "angular_tolerance": 0.1 },   // or true for defaults
   "3mf":  true,
   "drawing": {
-    "views": ["front", "top", "right", "iso"],   // also "left", "back", "bottom", "section:XZ"
+    "views": ["front", "top", "right", "iso"],   // also "left", "back", "bottom"; one file per view
     "hidden_lines": true,
-    "dimensions": true,          // overall envelope + hole callouts (Phase 2)
-    "format": ["svg", "dxf", "pdf"],
-    "scale": "auto"
+    "format": ["svg", "dxf", "pdf"],             // svg/dxf apply to views; pdf applies to the sheet
+    "scale": "auto",
+    "sections": [ { "name": "A", "plane": "XZ" },
+                  { "name": "B", "plane": { "base": "YZ", "offset": 10 }, "flip": true } ],
+    "sheet": true,                               // full annotated drawing sheet (draftwright)
+    "dimensions": true,                          // automatic dimensions and callouts on the sheet
+    "projection": "third",                       // or "first"
+    "page": "A4",                                // optional; automatic if omitted
+    "title_block": { "title": "Board", "number": "CG-001", "revision": "A",
+                     "material": "PLA", "tolerance": "ISO 2768-m", "drawn_by": "", "company": "" }
   },
-  "png": true                    // shaded or line preview for review
+  "png": true                    // line-art preview per view and per section
 }
 ```
 
-Outputs go to `out/<name>/`. The CLI can override any of this.
+Outputs go to `out/<name>/`:
+
+| File | What |
+|---|---|
+| `<name>.step`, `.stl`, `.3mf` | the solid |
+| `<name>_<view>.svg` / `.dxf` / `.png` | one orthographic view, hidden lines dashed, no dimensions |
+| `<name>_section_<label>.svg` / `.png` | the part cut at the plane, half on the normal side removed, cut faces filled grey |
+| `<name>_drawing.svg` / `.pdf` / `.dxf` | the sheet: third-angle views + iso, dimensions, hole and radius callouts, title block |
+
+Section convention: the half on the plane's normal side is discarded and you look at the cut
+face from that side; `flip` does the opposite. Remember `XZ` has normal -Y (section 3).
+
+The sheet is produced by [draftwright](https://pypi.org/project/draftwright/) (AGPL-3). Its
+automatic dimensioning picks envelope sizes, hole and slot callouts, radii and chamfers; it
+does not know your parameter names. Manual dimensions on the sheet are a later phase.
 
 ## 9. Errors
 

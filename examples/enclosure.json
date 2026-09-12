@@ -51,5 +51,7 @@
     }
   ],
 
-  "outputs": { "step": true, "stl": true, "3mf": true, "drawing": { "views": ["top", "front", "right", "iso"], "hidden_lines": true } }
+  "outputs": { "step": true, "stl": true, "3mf": true,
+    "drawing": { "views": ["top", "front", "right", "iso"], "hidden_lines": true,
+                 "sections": [ { "name": "A", "plane": "XZ" }, { "name": "B", "plane": "YZ" } ] } }
 }

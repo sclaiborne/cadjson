@@ -326,12 +326,35 @@ class StlOptions(Model):
 ViewName = Literal["front", "back", "top", "bottom", "left", "right", "iso"]
 
 
+class TitleBlock(Model):
+    title: str | None = Field(None, description="defaults to the document name")
+    number: str = "DWG-001"
+    revision: str = "A"
+    material: str = ""
+    tolerance: str | None = Field(None, description='e.g. "ISO 2768-m"; omitted means unspecified')
+    drawn_by: str = ""
+    company: str = ""
+    date: str = ""
+
+
+class SectionSpec(Model):
+    plane: PlaneRef
+    name: str | None = Field(None, description="label; defaults to A, B, C ...")
+    flip: bool = Field(False, description="keep the other half and look from the other side")
+    hidden_lines: bool = False
+
+
 class DrawingOptions(Model):
     views: list[ViewName] = ["front", "top", "right", "iso"]
     hidden_lines: bool = True
-    dimensions: bool = False
     format: list[Literal["svg", "dxf", "pdf"]] = ["svg"]
     scale: Literal["auto"] | Dim = "auto"
+    sections: list[SectionSpec] = Field([], description="section views, one file each (own renderer)")
+    sheet: bool = Field(False, description="full annotated drawing sheet via draftwright")
+    dimensions: bool = Field(False, description="automatic dimensions on the sheet")
+    projection: Literal["third", "first"] = "third"
+    page: str | None = Field(None, description='sheet size, e.g. "A4", "A3"; automatic if omitted')
+    title_block: TitleBlock = TitleBlock()
 
 
 class Outputs(Model):

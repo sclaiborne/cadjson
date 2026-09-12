@@ -36,5 +36,9 @@
     }
   ],
 
-  "outputs": { "step": true, "stl": true, "drawing": { "views": ["top", "front", "iso"], "hidden_lines": true, "dimensions": true } }
+  "outputs": { "step": true, "stl": true,
+    "drawing": { "views": ["top", "front", "iso"], "hidden_lines": true,
+                 "sections": [ { "name": "A", "plane": "XZ" } ],
+                 "sheet": true, "dimensions": true, "format": ["pdf"],
+                 "title_block": { "number": "CG-003", "drawn_by": "cadgen" } } }
 }

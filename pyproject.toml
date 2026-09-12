@@ -10,10 +10,12 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
-    "build123d>=0.11,<0.12",
+    # draftwright pins build123d <0.11 on Python <3.13, so accept 0.10 too
+    "build123d>=0.10,<0.12",
     "pydantic>=2.7",
     "click>=8.1",
     "resvg-py>=0.1",
+    "draftwright>=0.4.28",
 ]
 
 [project.optional-dependencies]
@@ -30,3 +32,4 @@ include = ["cadgen*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: takes several seconds (drawing sheets)"]
