@@ -122,6 +122,166 @@ class _Parser:
         raise ValueError(f"unexpected {text!r}")
 
 
+# --- AST (used by exporters that need the expression, not its value) ----------------------------
+
+
+class _AstParser(_Parser):
+    """Same grammar, but returns a tree: ('num', v) ('name', s) ('neg', x) ('bin', op, l, r) ('call', f, args)."""
+
+    def __init__(self, text: str):
+        super().__init__(text, {})
+
+    def expr(self):
+        node = self.term()
+        while self.peek() in (("op", "+"), ("op", "-")):
+            op = self.take()[1]
+            node = ("bin", op, node, self.term())
+        return node
+
+    def term(self):
+        node = self.unary()
+        while self.peek() in (("op", "*"), ("op", "/")):
+            op = self.take()[1]
+            node = ("bin", op, node, self.unary())
+        return node
+
+    def unary(self):
+        if self.peek() == ("op", "-"):
+            self.take()
+            return ("neg", self.unary())
+        if self.peek() == ("op", "+"):
+            self.take()
+            return self.unary()
+        return self.atom()
+
+    def atom(self):
+        kind, text = self.take()
+        if kind == "num":
+            return ("num", float(text))
+        if kind == "name":
+            if self.peek() == ("op", "("):
+                if text not in _FUNCS:
+                    raise ValueError(f"unknown function {text!r}")
+                self.take()
+                args = [self.expr()]
+                while self.peek() == ("op", ","):
+                    self.take()
+                    args.append(self.expr())
+                self.expect(")")
+                return ("call", text, args)
+            return ("name", text)
+        if kind == "op" and text == "(":
+            node = self.expr()
+            self.expect(")")
+            return node
+        raise ValueError(f"unexpected {text!r}")
+
+
+def parse_ast(text: str):
+    try:
+        return _AstParser(text).parse()
+    except ValueError as exc:
+        raise CadgenError(f"bad expression {text!r}: {exc}") from None
+
+
+def names_in(dim: Dim) -> set[str]:
+    """Parameter names referenced by a dim."""
+    if not isinstance(dim, str):
+        return set()
+    found: set[str] = set()
+
+    def walk(node):
+        if node[0] == "name":
+            found.add(node[1])
+        elif node[0] == "neg":
+            walk(node[1])
+        elif node[0] == "bin":
+            walk(node[2])
+            walk(node[3])
+        elif node[0] == "call":
+            for a in node[2]:
+                walk(a)
+
+    walk(parse_ast(dim))
+    return found
+
+
+class UnitsError(ValueError):
+    """The expression cannot be typed as a plain length or a plain number."""
+
+
+def to_fusion(dim: Dim, kinds: Mapping[str, str], expect: str) -> str:
+    """Render a dim as a Fusion 360 expression. `kinds` maps param name -> 'len' | 'none';
+    `expect` is 'len' (a length in mm) or 'none' (a unitless count or angle in degrees).
+    Raises UnitsError when the units do not work out, so callers can fall back to a number."""
+    if isinstance(dim, (int, float)):
+        return f"{dim:g} mm" if expect == "len" else f"{dim:g}"
+
+    def fmt(v: float) -> str:
+        return f"{v:g}"
+
+    def typed(node):
+        k = node[0]
+        if k == "num":
+            return fmt(node[1]), "num"
+        if k == "name":
+            return node[1], kinds.get(node[1], "len")
+        if k == "neg":
+            t, kd = typed(node[1])
+            return f"-({t})", kd
+        if k == "call":
+            parts = [typed(a) for a in node[2]]
+            if node[1] == "sqrt":
+                if any(kd == "len" for _, kd in parts):
+                    raise UnitsError("sqrt of a length")
+                return f"sqrt({parts[0][0]})", "none" if parts[0][1] == "none" else "num"
+            kds = {kd for _, kd in parts if kd != "num"}
+            if len(kds) > 1:
+                raise UnitsError("mixed units in function arguments")
+            target = kds.pop() if kds else "num"
+            texts = [t + " mm" if kd == "num" and target == "len" else t for t, kd in parts]
+            return f"{node[1]}({', '.join(texts)})", target
+        _, op, l, r = node
+        (lt, lk), (rt, rk) = typed(l), typed(r)
+        if op in "+-":
+            if lk == "len" and rk == "num":
+                rt, rk = rt + " mm", "len"
+            elif rk == "len" and lk == "num":
+                lt, lk = lt + " mm", "len"
+            if lk == "num" and rk == "num":
+                kd = "num"
+            elif {lk, rk} <= {"none", "num"}:
+                kd = "none"
+            elif lk == rk == "len":
+                kd = "len"
+            else:
+                raise UnitsError("adding a length to a number")
+            return f"{lt} {op} {rt}", kd
+        if op == "*":
+            if lk == "len" and rk == "len":
+                raise UnitsError("length times length")
+            kd = "len" if "len" in (lk, rk) else ("none" if "none" in (lk, rk) else "num")
+            return f"{lt} * {rt}", kd
+        # division
+        if lk == "len" and rk == "len":
+            kd = "none"
+        elif rk == "len":
+            raise UnitsError("number divided by a length")
+        else:
+            kd = "len" if lk == "len" else ("none" if "none" in (lk, rk) else "num")
+        return f"{lt} / ({rt})" if r[0] == "bin" else f"{lt} / {rt}", kd
+
+    text, kind = typed(parse_ast(dim))
+    if expect == "len":
+        if kind == "num":
+            return f"({text}) mm"
+        if kind != "len":
+            raise UnitsError("expected a length")
+    elif kind == "len":
+        raise UnitsError("expected a unitless value")
+    return text
+
+
 def evaluate(dim: Dim, params: Mapping[str, float]) -> float:
     """Evaluate a dim (number or expression string) against resolved params."""
     if isinstance(dim, bool):

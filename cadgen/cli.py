@@ -73,6 +73,29 @@ def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
     sys.exit(1 if failed else 0)
 
 
+@main.command("export-fusion")
+@click.argument("parts", nargs=-1, required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True,
+              help="output directory; <name>_fusion/ is created inside it")
+def export_fusion_cmd(parts, out_dir: Path) -> None:
+    """Write a Fusion 360 script that rebuilds PARTS with a native parametric timeline."""
+    from cadgen.build import load_document
+    from cadgen.fusion import export_fusion
+
+    failed = 0
+    for path in parts:
+        try:
+            doc = load_document(path)
+            files = export_fusion(doc, out_dir)
+            for f in files:
+                click.echo(f"  wrote {f}")
+            click.echo(f"{doc.name}: in Fusion, Utilities > Add-Ins > Scripts > + and pick the folder {files[0].parent}")
+        except CadgenError as exc:
+            failed += 1
+            click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)
+    sys.exit(1 if failed else 0)
+
+
 @main.command()
 def schema() -> None:
     """Print the JSON Schema for the document format."""

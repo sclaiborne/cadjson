@@ -236,4 +236,17 @@ Known gaps: sheet dimensions are automatic only (no way to say "dimension L here
 are separate files rather than placed on the sheet; no hatching, grey fill instead; draftwright
 takes 3 to 5 s per sheet.
 
-Phase 3 next: Fusion 360 native exporter (JSON -> Fusion API script with a real timeline).
+## 11. Phase 3 status (2026-09-12)
+
+- [x] `cadgen export-fusion part.json` writes `out/<name>_fusion/` (script + manifest)
+- [x] user parameters with expressions and inferred units (mm vs unitless)
+- [x] sketches on named, offset, face and explicit planes; profiles matched by area + centroid
+- [x] extrude, revolve, fillet, chamfer, shell, hole (simple/counterbore/countersink), mirror,
+      rectangular and circular patterns as native timeline features
+- [x] edges/faces matched at runtime by bounding-box centre and length/area recorded at export
+- [x] tests execute every example's script against a fake `adsk` API (`tests/fake_adsk.py`)
+- [ ] verified inside Fusion itself (needs a person to run the script; Fusion has no headless mode)
+- [ ] sketch dimensional constraints driven by parameters (sketch geometry is numeric today)
+- [ ] extrude taper
+
+See `docs/fusion-export.md`.
