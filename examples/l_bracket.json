@@ -33,7 +33,7 @@
     {
       "id": "outer_corners",
       "type": "fillet", "radius": "corner_r",
-      "edges": { "of_face": { "of": "profile", "normal": "+Y" }, "parallel_to": "Z" }
+      "edges": { "of_face": "back", "parallel_to": "Z" }
     },
     {
       "id": "base_slots",
@@ -47,7 +47,7 @@
       "id": "wall_holes",
       "type": "hole", "diameter": "hole_d", "through": true,
       "face": { "of": "profile", "normal": "-Y" },
-      "at": [[-15, 22], [15, 22]]
+      "at": [[-15, 8], [15, 8]]
     },
     {
       "id": "wall_top_chamfer",

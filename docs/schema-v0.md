@@ -1,7 +1,8 @@
-# cadgen schema v0 (draft for review)
+# cadgen schema v0
 
-Status: proposal, 2026-09-12. Nothing here is implemented. The goal of this document is to
-argue about the format before writing the interpreter. Examples in `examples/` follow it.
+Status: implemented in Phase 1 (2026-09-12) for everything below except `dimensions`, `pdf`,
+and `section` views, which are Phase 2. Examples in `examples/` build with `cadgen build`.
+`cadgen schema` prints the machine-readable JSON Schema generated from the same models.
 
 Design rule: **the numbers a person would write on a sketch are the numbers in the file.**
 Every labelled dimension appears once, in `params`, and features refer to it by name.
@@ -68,9 +69,13 @@ A `plane` field accepts:
 { "origin": [0, 0, 10], "normal": [0, 0, 1], "x_dir": [1, 0, 0] }   // explicit
 ```
 
-For a face plane: origin is the face centre, normal points **out of the material**, u and v
-follow the nearest global axes. So a cut sketched on a face with `"through": true` goes into
-the part with no sign to think about; a blind cut uses a negative distance.
+For a face plane: origin is the face centre and the normal points **out of the material**.
+If the face is horizontal, u is +X (and v is +Y on a top face, -Y on a bottom face). Otherwise
+v points up (+Z) and u is horizontal, to the right as seen by someone looking at the face.
+So a cut sketched on a face with `"through": true` goes into the part with no sign to think
+about; a blind cut uses a negative distance, and a `hole` always drills inward.
+
+An `OffsetPlane` may also carry `"origin": [u, v]` to shift the sketch origin within the plane.
 
 ## 5. Features
 
@@ -197,6 +202,12 @@ Pattern on a shape:
 "pattern": { "type": "grid",   "count": [3, 2], "spacing": [10, 8] }
 ```
 
+Linear and grid patterns are centred on the shape's own position by default, so a row of four
+vents with a shape centred at mid-height sits symmetrically about mid-height. Set
+`"centered": false` to start at the shape and step forward instead. A polar pattern places the
+shape on a circle of `radius` around `center` (default the sketch origin) and rotates each
+instance with its angle (`"rotate": false` keeps them upright).
+
 ## 7. Selectors
 
 Selectors pick faces or edges of the *current* solid. All given filters must match (AND).
@@ -230,8 +241,13 @@ Edge selector fields:
 Shortcuts (sugar, expand to the above): `"top"` = `{ "normal": "+Z", "nth": -1 }`, likewise
 `"bottom"`, `"left"` (-X), `"right"` (+X), `"front"` (-Y), `"back"` (+Y).
 
-`of` works by comparing topology before and after the named feature; the interpreter records
-that for every feature, so it is free to use.
+`of` works by comparing topology before and after the named feature: the faces (and edges)
+that feature *created*, identified by the surface or curve they lie on. Later cuts, fillets,
+and chamfers may trim those faces, and they still count as belonging to the feature. Faces
+that merely got trimmed by a cut do not belong to the cut; the cut's own walls do.
+
+`cadgen info part.json` prints every face and edge of the finished part with its normal,
+centre, and size, which is the quickest way to work out a selector.
 
 ## 8. Outputs
 

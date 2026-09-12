@@ -203,5 +203,22 @@ that API becomes the script format and nothing is thrown away.
 - [x] git repo, package skeleton (`cadgen/`, `pyproject.toml`, stub CLI), venv
 - [x] schema v0 draft: `docs/schema-v0.md`
 - [x] example parts: board_profile (two styles), board_profile_filleted, l_bracket, spacer, enclosure
-- [ ] review schema open questions (section 10 of the schema doc) and freeze v0
-- [ ] Phase 1 starts: Pydantic models for the schema, expression evaluator, build123d backend
+- [x] schema open questions: rect + cuts for examples (decided); the rest defaulted as documented
+- [x] Phase 1 started 2026-09-12
+
+## 9. Phase 1 status
+
+- [x] Pydantic schema (`cadgen/schema.py`), `cadgen schema` prints JSON Schema
+- [x] expression evaluator with params (`cadgen/expr.py`)
+- [x] planes: named, offset, face, explicit (`cadgen/planes.py`)
+- [x] sketches: rect, circle, slot, polygon, points, path; add/subtract; linear/polar/grid patterns
+- [x] features: extrude, revolve, fillet, chamfer, shell, hole, mirror, feature-level pattern
+- [x] selectors with feature tracking (`of`), convex/concave, and candidate listings on failure
+- [x] outputs: STEP, STL, 3MF, hidden-line SVG/DXF views, PNG previews
+- [x] CLI: validate, build, info, schema; all six examples build; 28 tests
+- [ ] `cadgen export --python` (emit the equivalent build123d script)
+- [ ] auto line weight / scale for small parts in SVG views
+- [ ] more example parts from real use, to shake out selector ergonomics
+
+Phase 2 next: drawing sheets with dimensions (draftwright / build123d-drafting-helpers), PDF,
+section views.

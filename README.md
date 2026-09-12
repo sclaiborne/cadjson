@@ -12,8 +12,23 @@ Engine: [build123d](https://build123d.readthedocs.io/) on the OpenCascade kernel
 
 ## Status
 
-Phase 0 (schema and examples). Nothing builds from JSON yet. See [PLANNING.md](PLANNING.md)
-for the option survey and plan, and [docs/schema-v0.md](docs/schema-v0.md) for the format.
+Phase 1: the feature tree builds and exports. Drawings have views with hidden lines but no
+dimensions yet (Phase 2). See [PLANNING.md](PLANNING.md) for the option survey and plan, and
+[docs/schema-v0.md](docs/schema-v0.md) for the format.
+
+## Usage
+
+```bash
+.venv\Scripts\cadgen validate examples\board_profile.json
+.venv\Scripts\cadgen build examples\board_profile.json
+.venv\Scripts\cadgen build examples\*.json --views front,top,right,iso
+.venv\Scripts\cadgen info examples\board_profile.json     # list faces and edges, to write selectors
+.venv\Scripts\cadgen schema > cadgen.schema.json
+```
+
+`build` writes to `out/<name>/`: STEP, STL, one SVG per view, and PNG previews. Each part's
+`outputs` block sets the defaults; `--step/--no-step`, `--stl/--no-stl`, `--png/--no-png`,
+`--views` and `-o` override them.
 
 ## Layout
 
