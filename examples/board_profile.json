@@ -1,0 +1,56 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "board_profile",
+  "description": "Board with a stepped tongue on the left, a groove, and a notch on the bottom right. Labels match the hand sketch; e and g were unlabelled.",
+  "units": "mm",
+
+  "params": {
+    "L": 100,
+    "D": 80,
+    "h": 20,
+    "b": 4,
+    "x": 12,
+    "y": 6,
+    "e": 8,
+    "g": "L - D - x",
+    "depth": 40
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "extrude",
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "L", "h": "h", "corner": [0, 0] }
+      ] },
+      "distance": "depth"
+    },
+    {
+      "id": "tongue_step",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "x", "h": "b", "top_left": [0, "h"] }
+      ] }
+    },
+    {
+      "id": "groove",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "g", "h": "h - y", "top_left": ["x", "h"] }
+      ] }
+    },
+    {
+      "id": "notch",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "g", "h": "y", "bottom_right": ["L - e", 0] }
+      ] }
+    }
+  ],
+
+  "outputs": {
+    "step": true,
+    "stl": { "tolerance": 0.01 },
+    "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true, "dimensions": true }
+  }
+}

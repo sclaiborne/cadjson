@@ -1,0 +1,60 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "l_bracket",
+  "description": "L bracket: base plate with two slots, upright with two holes, inside fillet, rounded outer corners. Exercises face planes, hole placement, edge selectors, fillet and chamfer.",
+  "units": "mm",
+
+  "params": {
+    "width": 60,
+    "base_len": 40,
+    "wall_h": 35,
+    "t": 4,
+    "hole_d": 5.5,
+    "corner_r": 6,
+    "inside_r": 3
+  },
+
+  "features": [
+    {
+      "id": "profile",
+      "type": "extrude",
+      "distance": "width",
+      "sketch": { "plane": "YZ", "shapes": [
+        { "type": "path", "start": [0, 0], "segments": [
+          "right base_len", "up t", "left base_len - t", "up wall_h - t", "left t", "close"
+        ] }
+      ] }
+    },
+    {
+      "id": "inside_fillet",
+      "type": "fillet", "radius": "inside_r",
+      "edges": { "of": "profile", "parallel_to": "X", "near": ["width / 2", "t", "t"] }
+    },
+    {
+      "id": "outer_corners",
+      "type": "fillet", "radius": "corner_r",
+      "edges": { "of_face": { "of": "profile", "normal": "+Y" }, "parallel_to": "Z" }
+    },
+    {
+      "id": "base_slots",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": { "face": { "of": "profile", "normal": "+Z", "nth": 0 } }, "shapes": [
+        { "type": "slot", "length": 12, "width": "hole_d", "center": [-15, 10] },
+        { "type": "slot", "length": 12, "width": "hole_d", "center": [15, 10] }
+      ] }
+    },
+    {
+      "id": "wall_holes",
+      "type": "hole", "diameter": "hole_d", "through": true,
+      "face": { "of": "profile", "normal": "-Y" },
+      "at": [[-15, 22], [15, 22]]
+    },
+    {
+      "id": "wall_top_chamfer",
+      "type": "chamfer", "length": 1,
+      "edges": { "of_face": { "normal": "+Z", "nth": -1 } }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true, "dimensions": true } }
+}

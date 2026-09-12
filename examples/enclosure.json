@@ -1,0 +1,55 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "enclosure",
+  "description": "Open-top box: rounded block, shelled from the top, vent slots on one long side, mirrored to the other side. Exercises shell, linear patterns, mirror of features, and offset planes.",
+  "units": "mm",
+
+  "params": {
+    "len": 80,
+    "wid": 50,
+    "hgt": 30,
+    "wall": 2,
+    "corner_r": 4,
+    "vent_len": 20,
+    "vent_w": 2,
+    "vent_pitch": 5,
+    "vent_count": 4
+  },
+
+  "features": [
+    {
+      "id": "block",
+      "type": "extrude",
+      "distance": "hgt",
+      "sketch": { "plane": "XY", "shapes": [
+        { "type": "rect", "w": "len", "h": "wid" }
+      ] }
+    },
+    {
+      "id": "round_corners",
+      "type": "fillet", "radius": "corner_r",
+      "edges": { "of": "block", "parallel_to": "Z" }
+    },
+    {
+      "id": "hollow",
+      "type": "shell", "thickness": "wall",
+      "remove": { "normal": "+Z" }
+    },
+    {
+      "id": "vents",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": { "base": "XZ", "offset": "wid / 2" }, "shapes": [
+        { "type": "rect", "w": "vent_len", "h": "vent_w", "center": [0, "hgt / 2"],
+          "pattern": { "type": "linear", "count": "vent_count", "spacing": "vent_pitch", "direction": "v" } }
+      ] }
+    },
+    {
+      "id": "vents_other_side",
+      "type": "mirror",
+      "features": ["vents"],
+      "plane": "XZ"
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "3mf": true, "drawing": { "views": ["top", "front", "right", "iso"], "hidden_lines": true } }
+}

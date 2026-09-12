@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated CAD outputs (JSON is the source of truth; STEP/STL are build artifacts)
+out/
+*.step
+*.stp
+*.stl
+*.3mf
+*.brep
+*.dxf
+
+# Keep rendered previews under examples/previews so reviews show visual diffs
+!examples/previews/*.svg
+!examples/previews/*.png
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

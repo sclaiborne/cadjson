@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cadgen"
+version = "0.0.1"
+description = "JSON feature-tree to CAD (STEP, STL, 2D drawings) via build123d"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "build123d>=0.11,<0.12",
+    "pydantic>=2.7",
+    "click>=8.1",
+    "resvg-py>=0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "trimesh>=4",
+]
+
+[project.scripts]
+cadgen = "cadgen.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cadgen*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,38 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "board_profile_path",
+  "description": "Same board as board_profile.json, written as one closed path of relative moves instead of a rectangle plus cuts. Kept for comparing readability; delete whichever style loses.",
+  "units": "mm",
+
+  "params": {
+    "L": 100, "D": 80, "h": 20, "b": 4, "x": 12, "y": 6, "e": 8,
+    "g": "L - D - x",
+    "depth": 40
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "extrude",
+      "distance": "depth",
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "path", "start": [0, 0], "segments": [
+          "right L - e - g",
+          "up y",
+          "right g",
+          "down y",
+          "right e",
+          "up h",
+          "left D",
+          "down h - y",
+          "left g",
+          "up h - b - y",
+          "left x",
+          "close"
+        ] }
+      ] }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "iso"], "hidden_lines": true } }
+}

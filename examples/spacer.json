@@ -1,0 +1,40 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "spacer",
+  "description": "Round spacer made by revolving a rectangle, chamfered outer edges, and a polar pattern of four small through holes. Exercises revolve, sketch-level patterns, and geometry-type selectors.",
+  "units": "mm",
+
+  "params": {
+    "bore_d": 8,
+    "outer_d": 20,
+    "height": 10,
+    "pin_d": 2,
+    "pin_pcd": 14
+  },
+
+  "features": [
+    {
+      "id": "ring",
+      "type": "revolve",
+      "axis": "v",
+      "angle": 360,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "(outer_d - bore_d) / 2", "h": "height", "corner": ["bore_d / 2", 0] }
+      ] }
+    },
+    {
+      "id": "outer_chamfers",
+      "type": "chamfer", "length": 0.8,
+      "edges": { "of": "ring", "geom": "circle", "radius": { "min": "outer_d / 2 - 0.01" } }
+    },
+    {
+      "id": "pin_holes",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": { "face": { "of": "ring", "normal": "+Z" } }, "shapes": [
+        { "type": "circle", "d": "pin_d", "pattern": { "type": "polar", "count": 4, "radius": "pin_pcd / 2" } }
+      ] }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["top", "front", "iso"], "hidden_lines": true, "dimensions": true } }
+}
