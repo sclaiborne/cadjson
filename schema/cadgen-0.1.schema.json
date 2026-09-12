@@ -1377,9 +1377,37 @@
             },
             {
               "type": "string"
+            },
+            {
+              "type": "null"
             }
           ],
+          "default": null,
           "title": "Diameter"
+        },
+        "standard": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "thread designation, e.g. \"M3\", \"M8x1\", \"#6-32\", \"1/4-20\"",
+          "title": "Standard"
+        },
+        "fit": {
+          "default": "medium",
+          "description": "hole size for a standard thread",
+          "enum": [
+            "tap",
+            "close",
+            "medium"
+          ],
+          "title": "Fit",
+          "type": "string"
         },
         "through": {
           "default": false,
@@ -1431,8 +1459,7 @@
         "id",
         "type",
         "face",
-        "at",
-        "diameter"
+        "at"
       ],
       "title": "Hole",
       "type": "object"
@@ -1532,6 +1559,52 @@
         "spacing"
       ],
       "title": "LinearPattern",
+      "type": "object"
+    },
+    "Loft": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "loft",
+          "title": "Type",
+          "type": "string"
+        },
+        "sections": {
+          "description": "one closed shape per section, each on its own plane",
+          "items": {
+            "$ref": "#/$defs/Sketch"
+          },
+          "minItems": 2,
+          "title": "Sections",
+          "type": "array"
+        },
+        "ruled": {
+          "default": false,
+          "title": "Ruled",
+          "type": "boolean"
+        },
+        "op": {
+          "default": "add",
+          "enum": [
+            "add",
+            "cut",
+            "intersect"
+          ],
+          "title": "Op",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "sections"
+      ],
+      "title": "Loft",
       "type": "object"
     },
     "Mirror": {
@@ -1671,6 +1744,86 @@
       "title": "OffsetPlane",
       "type": "object"
     },
+    "OpenPath": {
+      "additionalProperties": false,
+      "description": "An open 2D path on a plane, used as a sweep path.",
+      "properties": {
+        "plane": {
+          "anyOf": [
+            {
+              "enum": [
+                "XY",
+                "XZ",
+                "YZ"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/OffsetPlane"
+            },
+            {
+              "$ref": "#/$defs/FacePlane"
+            },
+            {
+              "$ref": "#/$defs/ExplicitPlane"
+            }
+          ],
+          "title": "Plane"
+        },
+        "start": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Start",
+          "type": "array"
+        },
+        "segments": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plane",
+        "segments"
+      ],
+      "title": "OpenPath",
+      "type": "object"
+    },
     "Outputs": {
       "additionalProperties": false,
       "properties": {
@@ -1692,9 +1845,16 @@
           "title": "Stl"
         },
         "3mf": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ThreeMfOptions"
+            }
+          ],
           "default": false,
-          "title": "3Mf",
-          "type": "boolean"
+          "title": "3Mf"
         },
         "drawing": {
           "anyOf": [
@@ -1715,6 +1875,167 @@
         }
       },
       "title": "Outputs",
+      "type": "object"
+    },
+    "PartRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "part",
+          "title": "Type",
+          "type": "string"
+        },
+        "file": {
+          "description": "another cadgen part file, relative to this file",
+          "title": "File",
+          "type": "string"
+        },
+        "at": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "At",
+          "type": "array"
+        },
+        "rotate": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "degrees about X, Y, Z applied before translation",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Rotate",
+          "type": "array"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "default": {},
+          "description": "override the imported part's params",
+          "title": "Params",
+          "type": "object"
+        },
+        "op": {
+          "default": "add",
+          "enum": [
+            "add",
+            "cut",
+            "intersect"
+          ],
+          "title": "Op",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "file"
+      ],
+      "title": "PartRef",
       "type": "object"
     },
     "PathShape": {
@@ -1986,6 +2307,156 @@
         "count"
       ],
       "title": "PatternFeature",
+      "type": "object"
+    },
+    "Placement": {
+      "additionalProperties": false,
+      "description": "A part positioned in an assembly.",
+      "properties": {
+        "file": {
+          "title": "File",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "defaults to the file's part name",
+          "title": "Name"
+        },
+        "at": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "At",
+          "type": "array"
+        },
+        "rotate": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Rotate",
+          "type": "array"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "default": {},
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "title": "Placement",
       "type": "object"
     },
     "PointsShape": {
@@ -2919,7 +3390,8 @@
                 "points": "#/$defs/PointsShape",
                 "polygon": "#/$defs/PolygonShape",
                 "rect": "#/$defs/RectShape",
-                "slot": "#/$defs/SlotShape"
+                "slot": "#/$defs/SlotShape",
+                "text": "#/$defs/TextShape"
               },
               "propertyName": "type"
             },
@@ -2941,6 +3413,9 @@
               },
               {
                 "$ref": "#/$defs/PathShape"
+              },
+              {
+                "$ref": "#/$defs/TextShape"
               }
             ]
           },
@@ -3131,6 +3606,387 @@
       "title": "StlOptions",
       "type": "object"
     },
+    "Sweep": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "sweep",
+          "title": "Type",
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/$defs/Sketch",
+          "description": "closed profile on a plane at the path start, perpendicular to it"
+        },
+        "path": {
+          "$ref": "#/$defs/OpenPath"
+        },
+        "op": {
+          "default": "add",
+          "enum": [
+            "add",
+            "cut",
+            "intersect"
+          ],
+          "title": "Op",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "profile",
+        "path"
+      ],
+      "title": "Sweep",
+      "type": "object"
+    },
+    "TextShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "font size (cap height-ish) in document units",
+          "title": "Size"
+        },
+        "center": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Angle"
+        },
+        "font": {
+          "default": "Arial",
+          "title": "Font",
+          "type": "string"
+        },
+        "bold": {
+          "default": false,
+          "title": "Bold",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "text",
+        "size"
+      ],
+      "title": "TextShape",
+      "type": "object"
+    },
+    "Thread": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "thread",
+          "title": "Type",
+          "type": "string"
+        },
+        "size": {
+          "description": "thread designation, e.g. \"M6\", \"M8x1\", \"1/4-20\"",
+          "title": "Size",
+          "type": "string"
+        },
+        "face": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            }
+          ],
+          "description": "the cylindrical face to thread (a shank or a hole wall)",
+          "title": "Face"
+        },
+        "kind": {
+          "default": "external",
+          "enum": [
+            "external",
+            "internal"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "threaded length; whole face if omitted",
+          "title": "Length"
+        },
+        "near": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "thread starts at the face end nearest this point",
+          "title": "Near"
+        },
+        "hand": {
+          "default": "right",
+          "enum": [
+            "right",
+            "left"
+          ],
+          "title": "Hand",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "size",
+        "face"
+      ],
+      "title": "Thread",
+      "type": "object"
+    },
+    "ThreeMfOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "tolerance": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0.01,
+          "title": "Tolerance"
+        },
+        "angular_tolerance": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0.1,
+          "title": "Angular Tolerance"
+        },
+        "part_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Part Number"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "title": "ThreeMfOptions",
+      "type": "object"
+    },
     "TitleBlock": {
       "additionalProperties": false,
       "properties": {
@@ -3251,7 +4107,17 @@
       "title": "Params",
       "type": "object"
     },
+    "parts": {
+      "default": [],
+      "description": "assembly: other part files placed in this one",
+      "items": {
+        "$ref": "#/$defs/Placement"
+      },
+      "title": "Parts",
+      "type": "array"
+    },
     "features": {
+      "default": [],
       "items": {
         "discriminator": {
           "mapping": {
@@ -3259,10 +4125,14 @@
             "extrude": "#/$defs/Extrude",
             "fillet": "#/$defs/Fillet",
             "hole": "#/$defs/Hole",
+            "loft": "#/$defs/Loft",
             "mirror": "#/$defs/Mirror",
+            "part": "#/$defs/PartRef",
             "pattern": "#/$defs/PatternFeature",
             "revolve": "#/$defs/Revolve",
-            "shell": "#/$defs/Shell"
+            "shell": "#/$defs/Shell",
+            "sweep": "#/$defs/Sweep",
+            "thread": "#/$defs/Thread"
           },
           "propertyName": "type"
         },
@@ -3290,10 +4160,21 @@
           },
           {
             "$ref": "#/$defs/PatternFeature"
+          },
+          {
+            "$ref": "#/$defs/Thread"
+          },
+          {
+            "$ref": "#/$defs/Loft"
+          },
+          {
+            "$ref": "#/$defs/Sweep"
+          },
+          {
+            "$ref": "#/$defs/PartRef"
           }
         ]
       },
-      "minItems": 1,
       "title": "Features",
       "type": "array"
     },
@@ -3310,8 +4191,7 @@
   },
   "required": [
     "schema",
-    "name",
-    "features"
+    "name"
   ],
   "title": "Document",
   "type": "object"

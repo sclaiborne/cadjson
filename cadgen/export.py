@@ -47,9 +47,17 @@ def write_stl(part: Part, path: Path, tolerance: float, angular_tolerance: float
     return path
 
 
-def write_3mf(part: Part, path: Path, tolerance: float, angular_tolerance: float) -> Path:
+def write_3mf(part: Part, path: Path, tolerance: float, angular_tolerance: float, *,
+              name: str | None = None, part_number: str | None = None) -> Path:
+    from cadgen import __version__
+
     m = Mesher()
-    m.add_shape(part, linear_deflection=tolerance, angular_deflection=angular_tolerance)
+    m.add_shape(part, linear_deflection=tolerance, angular_deflection=angular_tolerance, part_number=part_number)
+    m.add_meta_data("cadgen", "generator", f"cadgen {__version__}", "str", True)
+    if name:
+        m.add_meta_data("cadgen", "name", name, "str", True)
+    if part_number:
+        m.add_meta_data("cadgen", "part_number", part_number, "str", True)
     m.write(str(path))
     return path
 

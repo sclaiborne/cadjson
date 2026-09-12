@@ -1,0 +1,28 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "assembly_stack",
+  "description": "Assembly: two hex standoffs and a spacer (with its outer diameter overridden) stacked on a plate that is modelled here. Exercises placed parts with param overrides plus local features.",
+  "units": "mm",
+
+  "params": {
+    "pitch": 20,
+    "plate_t": 3
+  },
+
+  "parts": [
+    { "file": "hex_standoff.json", "name": "standoff_left", "at": [0, 0, 0] },
+    { "file": "hex_standoff.json", "name": "standoff_right", "at": ["pitch", 0, 0] },
+    { "file": "spacer.json", "name": "spacer", "at": ["pitch / 2", 0, 12], "params": { "outer_d": 30 } }
+  ],
+
+  "features": [
+    {
+      "id": "plate",
+      "type": "extrude", "distance": "-plate_t",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "rect", "w": "pitch + 20", "h": 20, "center": ["pitch / 2", 0] } ] }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "iso"], "hidden_lines": true } }
+}

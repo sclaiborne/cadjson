@@ -16,6 +16,8 @@ dependencies = [
     "click>=8.1",
     "resvg-py>=0.1",
     "draftwright>=0.4.28",
+    # threads; 0.3 requires build123d 0.11.1 which draftwright forbids on Python < 3.13
+    "bd_warehouse>=0.2,<0.3",
 ]
 
 [project.optional-dependencies]

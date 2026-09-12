@@ -7,9 +7,11 @@ import math
 from dataclasses import dataclass, field
 
 from build123d import (
+    Align,
     Axis,
     Circle,
     Cone,
+    Cylinder,
     Edge,
     Face,
     Location,
@@ -202,6 +204,91 @@ class Builder:
                 after = after - mirror(rec.removed, about=plane)
         return self._commit(fid, after)
 
+    def loft(self, fid: str, sections: list, ruled: bool, op: str) -> Part:
+        from build123d import loft as b3d_loft
+
+        faces = []
+        for i, located in enumerate(sections):
+            fs = located.faces()
+            if len(fs) != 1:
+                raise CadgenError(f"loft section {i} must be exactly one closed shape, got {len(fs)}", fid)
+            faces.append(fs[0])
+        try:
+            tool = b3d_loft(faces, ruled=ruled)
+        except Exception as exc:
+            raise CadgenError(f"loft failed: {exc}", fid, ["sections should have compatible shapes and not cross"]) from None
+        return self._combine(fid, tool, op)
+
+    def sweep(self, fid: str, profile, path_wire, op: str) -> Part:
+        from build123d import Transition
+        from build123d import sweep as b3d_sweep
+
+        fs = profile.faces()
+        if len(fs) != 1:
+            raise CadgenError(f"sweep profile must be exactly one closed shape, got {len(fs)}", fid)
+        try:
+            tool = b3d_sweep(fs[0], path=path_wire, transition=Transition.ROUND)
+        except Exception as exc:
+            raise CadgenError(f"sweep failed: {exc}", fid, ["the profile should sit at the path start, perpendicular to it",
+                                                         "bend radii must exceed the profile's half-width"]) from None
+        return self._combine(fid, tool, op)
+
+    def place(self, fid: str, shape: Part, op: str) -> Part:
+        """Combine a ready-made shape (an imported part) with the body."""
+        return self._combine(fid, shape, op)
+
+    def thread(self, fid: str, face: Face, spec, external: bool, length: float | None, near: Vector | None,
+               hand: str) -> Part:
+        from OCP.BRepAdaptor import BRepAdaptor_Surface
+
+        from cadgen.planes import plane_from_normal
+
+        base = self.require_solid(fid, "thread")
+        if face.geom_type.name != "CYLINDER":
+            raise CadgenError(f"thread needs a cylindrical face, got {face.geom_type.name.lower()}", fid)
+        try:
+            from bd_warehouse.thread import IsoThread
+        except ImportError:
+            raise CadgenError("threads need the bd_warehouse package (pip install 'bd_warehouse<0.3')", fid) from None
+        cyl = BRepAdaptor_Surface(face.wrapped).Cylinder()
+        ax = cyl.Axis()
+        d = Vector(ax.Direction().X(), ax.Direction().Y(), ax.Direction().Z()).normalized()
+        p = Vector(ax.Location().X(), ax.Location().Y(), ax.Location().Z())
+        ts = [(Vector(v.X, v.Y, v.Z) - p).dot(d) for v in face.vertices()]
+        tmin, tmax = min(ts), max(ts)
+        face_len = tmax - tmin
+        if face_len < 1e-6:
+            raise CadgenError("cannot determine the length of the cylindrical face", fid)
+        start_t, direction = tmin, d
+        if near is not None:
+            if (near - (p + d * tmax)).length < (near - (p + d * tmin)).length:
+                start_t, direction = tmax, d * -1
+        L = face_len if length is None else min(length, face_len)
+        if L <= spec.pitch:
+            raise CadgenError(f"thread length {L:g} is shorter than one pitch ({spec.pitch:g})", fid)
+        radius = cyl.Radius()
+        expect = spec.major / 2 if external else spec.tap_drill / 2
+        hints = []
+        if abs(radius - expect) > 0.6:
+            hints.append(f"face radius is {radius:g}, expected about {expect:g} for {spec.designation}")
+        plane = plane_from_normal(p + d * start_t, direction)
+        try:
+            th = IsoThread(major_diameter=spec.major, pitch=spec.pitch, length=L, external=external,
+                           hand=hand, end_finishes=("fade", "fade"))
+            bb = th.bounding_box()
+            th = th.translate((0, 0, -bb.min.Z))
+            th = plane * th
+            align = (Align.CENTER, Align.CENTER, Align.MIN)
+            if external:
+                ring = Cylinder(spec.major / 2 + 0.05, L, align=align) - Cylinder(th.min_radius, L, align=align)
+                after = (base - (plane * ring)) + th
+            else:
+                bore = Cylinder(spec.major / 2, L, align=align)
+                after = (base - (plane * bore)) + th
+        except Exception as exc:
+            raise CadgenError(f"thread failed: {exc}", fid, hints) from None
+        return self._commit(fid, after)
+
     def pattern(self, fid: str, feature_ids: list[str], transforms: list) -> Part:
         """transforms: callables Shape -> Shape for each copy (the original is not included)."""
         base = self.require_solid(fid, "pattern")
@@ -214,9 +301,6 @@ class Builder:
                 if rec.removed is not None:
                     after = after - tf(rec.removed)
         return self._commit(fid, after)
-
-
-from build123d import Align  # noqa: E402  (used by hole)
 
 
 def _nonempty(shape: Shape | None) -> Part | None:

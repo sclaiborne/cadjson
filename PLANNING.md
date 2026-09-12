@@ -265,3 +265,18 @@ See `docs/fusion-export.md`.
       plate_inch: inch units + countersinks; hex_standoff: blind and counterbored holes from
       opposite faces)
 - [ ] MCP server (not requested; the CLI + skill is the agent interface for now)
+
+## 13. Phase 5 status (2026-09-12)
+
+- [x] standard threads: `hole` accepts `standard` + `fit` (ISO metric coarse/fine, UNC/UNF tap
+      and clearance sizes, `cadgen/standards.py`); `thread` feature makes real ISO thread
+      geometry via bd_warehouse 0.2 (external on a shank, internal in a hole)
+- [x] `text` sketch shape (emboss or engrave)
+- [x] `loft` and `sweep` features (sweep uses the round transition; the default one is wrong)
+- [x] `part` feature: import another part file as a tool with param overrides
+- [x] assemblies: top-level `parts` placement, separate named solids in STEP, cycle detection
+- [x] expressions: pi, trig (degrees), floor/ceil/round; Fusion translation keeps units right
+- [x] 3MF metadata (name, part number, generator)
+- [x] examples: bolt, tapped_block, funnel, hook, assembly_stack
+- [ ] Fusion export of thread/loft/sweep/part/text and of assemblies (explicit error today)
+- [ ] hatching on section views; sections placed on the sheet

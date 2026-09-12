@@ -1,0 +1,42 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "bolt",
+  "description": "M6 x 20 hex bolt with a real ISO thread over the last 15 mm and a chamfered tip. Exercises the thread feature, sketches on the bottom face, and circle-edge chamfers.",
+  "units": "mm",
+
+  "params": {
+    "size_d": 6,
+    "shank_len": 20,
+    "thread_len": 15,
+    "head_flats": 10,
+    "head_h": 4,
+    "tip_chamfer": 0.6
+  },
+
+  "features": [
+    {
+      "id": "head",
+      "type": "extrude", "distance": "head_h",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "polygon", "sides": 6, "flat": "head_flats" } ] }
+    },
+    {
+      "id": "shank",
+      "type": "extrude", "distance": "shank_len",
+      "sketch": { "plane": { "face": "bottom" }, "shapes": [ { "type": "circle", "d": "size_d" } ] }
+    },
+    {
+      "id": "tip",
+      "type": "chamfer", "length": "tip_chamfer",
+      "edges": { "of_face": "bottom", "geom": "circle" }
+    },
+    {
+      "id": "thread",
+      "type": "thread", "size": "M6", "kind": "external", "length": "thread_len",
+      "face": { "of": "shank", "geom": "cylinder" },
+      "near": [0, 0, "-shank_len"]
+    }
+  ],
+
+  "outputs": { "step": true, "stl": { "tolerance": 0.005 }, "drawing": { "views": ["front", "iso"], "hidden_lines": false } }
+}

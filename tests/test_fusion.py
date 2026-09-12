@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from cadgen.build import load_document
+from cadgen.errors import CadgenError
 from cadgen.expr import UnitsError, to_fusion
 from cadgen.fusion import FusionExporter, export_fusion, infer_param_kinds
 
@@ -47,9 +48,29 @@ def test_param_kinds_from_usage():
     assert kinds["len"] == "len"
 
 
+UNSUPPORTED = {"thread", "loft", "sweep", "part"}
+
+
+def fusion_unsupported(doc) -> str | None:
+    if doc.parts:
+        return "assembly"
+    for f in doc.features:
+        if f.type in UNSUPPORTED:
+            return f.type
+        for shape in getattr(getattr(f, "sketch", None), "shapes", []) or []:
+            if shape.type == "text":
+                return "text"
+    return None
+
+
 @pytest.mark.parametrize("path", ALL, ids=[p.stem for p in ALL])
 def test_script_generates_compiles_and_dry_runs(path, tmp_path):
     doc = load_document(path)
+    why = fusion_unsupported(doc)
+    if why:
+        with pytest.raises(CadgenError, match="cannot be exported|assembl"):
+            export_fusion(doc, tmp_path)
+        pytest.skip(f"{why} is not exported to Fusion yet (error is explicit)")
     files = export_fusion(doc, tmp_path)
     script = files[0].read_text(encoding="utf-8")
     compile(script, str(files[0]), "exec")

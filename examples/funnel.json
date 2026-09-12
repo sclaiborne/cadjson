@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "funnel",
+  "description": "Funnel: loft from a wide circle to a narrow one, shelled open at both ends. Exercises loft between sketches on offset planes and multi-face shell openings.",
+  "units": "mm",
+
+  "params": {
+    "top_d": 50,
+    "spout_d": 12,
+    "height": 40,
+    "wall": 1.6
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "loft",
+      "sections": [
+        { "plane": "XY", "shapes": [ { "type": "circle", "d": "spout_d" } ] },
+        { "plane": { "base": "XY", "offset": "height" }, "shapes": [ { "type": "circle", "d": "top_d" } ] }
+      ]
+    },
+    {
+      "id": "hollow",
+      "type": "shell", "thickness": "wall",
+      "remove": { "geom": "plane" }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "iso"], "hidden_lines": true, "sections": [ { "name": "A", "plane": "XZ" } ] } }
+}

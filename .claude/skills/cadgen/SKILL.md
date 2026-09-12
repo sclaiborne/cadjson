@@ -54,8 +54,13 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
   centred on the shape by default).
 - **Features**: `extrude` (distance | through, both, op add/cut/intersect), `revolve` (axis u/v or
   point+dir, angle), `fillet`, `chamfer` (length, length2), `shell` (thickness, remove), `hole`
-  (face, at, diameter, through | depth, counterbore, countersink), `mirror` (plane, features),
-  `pattern` (features, kind linear/polar, count, spacing+direction | axis+angle).
+  (face, at, diameter | `standard` "M3"/"#6-32" + `fit` tap/close/medium, through | depth,
+  counterbore, countersink), `mirror` (plane, features), `pattern` (features, kind linear/polar,
+  count, spacing+direction | axis+angle), `thread` (size "M6", kind external/internal, face,
+  length, near), `loft` (sections), `sweep` (profile, path), `part` (file, op, at, rotate, params).
+- **Assemblies**: a top-level `parts` list places other part files (`file`, `at`, `rotate`,
+  `params` overrides); they stay separate solids in the STEP.
+- **Text**: a `text` sketch shape (text, size, center); cut with a negative distance to engrave.
 - **Selectors** (all filters AND together; never indices):
   faces: `of`, `normal` `"+Z"`, `geom`, `nth` + `sort_by`, `near`, `area`; shortcuts `"top"`,
   `"bottom"`, `"left"`, `"right"`, `"front"`, `"back"`.
@@ -75,6 +80,10 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
   one per label (see `examples/board_profile.json`), or one `path` of relative moves.
 - Chamfer every edge of the top face: `{ "of_face": "top" }`.
 - Vents on both sides: cut the pattern on one side, then `mirror` with `"features": ["vents"]`.
+- Tapped hole: `hole` with `"standard": "M6", "fit": "tap"`, then `thread` kind `internal` on
+  `{ "of": "<hole id>", "geom": "cylinder" }`. Bolt: circle shank at the major diameter, then
+  `thread` kind `external` on `{ "of": "<shank id>", "geom": "cylinder" }`.
+- Screw clearance holes: `"standard": "M3", "fit": "medium"` (no need to look up 3.4 mm).
 
 ## Gotchas
 

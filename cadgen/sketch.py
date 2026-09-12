@@ -6,7 +6,9 @@ import math
 import re
 
 from build123d import (
+    Align,
     Circle,
+    FontStyle,
     Line,
     Location,
     Plane,
@@ -16,7 +18,9 @@ from build123d import (
     RegularPolygon,
     Sketch as B3dSketch,
     SlotOverall,
+    Text,
     Vector,
+    Wire,
     make_face,
 )
 
@@ -26,6 +30,7 @@ from cadgen.schema import (
     CircleShape,
     GridPattern,
     LinearPattern,
+    OpenPath,
     PathShape,
     PointsShape,
     PolarPattern,
@@ -33,6 +38,7 @@ from cadgen.schema import (
     RectShape,
     Sketch,
     SlotShape,
+    TextShape,
 )
 
 _SEG = re.compile(r"^\s*(right|left|up|down|line|arc|to|close)\b\s*(.*)$", re.IGNORECASE)
@@ -83,12 +89,21 @@ def _points(shape: PointsShape, ctx: Context) -> B3dSketch:
     return Polygon(*pts, align=None)
 
 
-def _path(shape: PathShape, ctx: Context) -> B3dSketch:
-    start = Vector(*ctx.vec2(shape.start))
+def _text(shape: TextShape, ctx: Context) -> B3dSketch:
+    cx, cy = ctx.vec2(shape.center)
+    style = FontStyle.BOLD if shape.bold else FontStyle.REGULAR
+    txt = Text(shape.text, ctx.length(shape.size), font=shape.font, font_style=style,
+               align=(Align.CENTER, Align.CENTER))
+    return Location((cx, cy, 0), ctx.num(shape.angle)) * txt
+
+
+def path_edges(start_pt, segments: list[str], ctx: Context, allow_open: bool = False):
+    """Parse path segments into 2D edges. Returns (edges, closed)."""
+    start = Vector(*ctx.vec2(start_pt))
     cur = start
     edges = []
     closed = False
-    for i, seg in enumerate(shape.segments):
+    for i, seg in enumerate(segments):
         m = _SEG.match(seg)
         if not m:
             raise CadgenError(
@@ -108,7 +123,7 @@ def _path(shape: PathShape, ctx: Context) -> B3dSketch:
             if (cur - start).length > 1e-9:
                 edges.append(Line(cur, start))
             closed = True
-            if i != len(shape.segments) - 1:
+            if i != len(segments) - 1:
                 raise CadgenError(f"path segment {i}: close must be the last segment", ctx.feature_id)
             break
         if word in ("right", "left", "up", "down"):
@@ -135,9 +150,22 @@ def _path(shape: PathShape, ctx: Context) -> B3dSketch:
                 )
             edges.append(RadiusArc(cur, nxt, r))
         cur = nxt
-    if not closed:
+    if not closed and not allow_open:
         raise CadgenError('path must end with "close"', ctx.feature_id)
+    if closed and allow_open:
+        raise CadgenError("an open path (sweep) must not end with close", ctx.feature_id)
+    return edges, closed
+
+
+def _path(shape: PathShape, ctx: Context) -> B3dSketch:
+    edges, _ = path_edges(shape.start, shape.segments, ctx)
     return make_face(edges)
+
+
+def open_path_wire(path: OpenPath, ctx: Context) -> Wire:
+    """A 2D open path as a Wire in plane-local coordinates."""
+    edges, _ = path_edges(path.start, path.segments, ctx, allow_open=True)
+    return Wire(edges)
 
 
 _BUILDERS = {
@@ -147,6 +175,7 @@ _BUILDERS = {
     PolygonShape: _polygon,
     PointsShape: _points,
     PathShape: _path,
+    TextShape: _text,
 }
 
 

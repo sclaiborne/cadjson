@@ -20,7 +20,19 @@ _FUNCS = {
     "max": max,
     "abs": abs,
     "sqrt": math.sqrt,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "round": round,
+    # trigonometry in degrees
+    "sin": lambda a: math.sin(math.radians(a)),
+    "cos": lambda a: math.cos(math.radians(a)),
+    "tan": lambda a: math.tan(math.radians(a)),
+    "asin": lambda x: math.degrees(math.asin(x)),
+    "acos": lambda x: math.degrees(math.acos(x)),
+    "atan": lambda x: math.degrees(math.atan(x)),
 }
+_ONE_ARG = {"abs", "sqrt", "floor", "ceil", "round", "sin", "cos", "tan", "asin", "acos", "atan"}
+CONSTANTS = {"pi": math.pi}
 
 
 class _Parser:
@@ -108,13 +120,18 @@ class _Parser:
                     self.take()
                     args.append(self.expr())
                 self.expect(")")
-                if text in ("abs", "sqrt") and len(args) != 1:
+                if text in _ONE_ARG and len(args) != 1:
                     raise ValueError(f"{text} takes one argument")
-                return float(_FUNCS[text](*args))
-            if text not in self.params:
-                known = ", ".join(sorted(self.params)) or "(none)"
-                raise ValueError(f"unknown parameter {text!r}; params are: {known}")
-            return float(self.params[text])
+                try:
+                    return float(_FUNCS[text](*args))
+                except (ValueError, OverflowError) as exc:
+                    raise ValueError(f"{text}: {exc}") from None
+            if text in self.params:
+                return float(self.params[text])
+            if text in CONSTANTS:
+                return CONSTANTS[text]
+            known = ", ".join(sorted(self.params)) or "(none)"
+            raise ValueError(f"unknown parameter {text!r}; params are: {known}")
         if kind == "op" and text == "(":
             value = self.expr()
             self.expect(")")
@@ -225,16 +242,24 @@ def to_fusion(dim: Dim, kinds: Mapping[str, str], expect: str) -> str:
         if k == "num":
             return fmt(node[1]), "num"
         if k == "name":
+            if node[1] in CONSTANTS and node[1] not in kinds:
+                return ("PI" if node[1] == "pi" else node[1]), "num"
             return node[1], kinds.get(node[1], "len")
         if k == "neg":
             t, kd = typed(node[1])
             return f"-({t})", kd
         if k == "call":
             parts = [typed(a) for a in node[2]]
-            if node[1] == "sqrt":
-                if any(kd == "len" for _, kd in parts):
-                    raise UnitsError("sqrt of a length")
-                return f"sqrt({parts[0][0]})", "none" if parts[0][1] == "none" else "num"
+            fn = node[1]
+            if fn in ("sqrt", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round"):
+                t, kd = parts[0]
+                if kd == "len" and fn != "round" and fn != "floor" and fn != "ceil":
+                    raise UnitsError(f"{fn} of a length")
+                if fn in ("sin", "cos", "tan"):
+                    return f"{fn}(({t}) * 1 deg)", "none"
+                if fn in ("asin", "acos", "atan"):
+                    return f"{fn}({t}) / 1 deg", "none"
+                return f"{fn}({t})", "none" if kd == "none" else kd
             kds = {kd for _, kd in parts if kd != "num"}
             if len(kds) > 1:
                 raise UnitsError("mixed units in function arguments")

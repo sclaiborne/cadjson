@@ -1,0 +1,25 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "hook",
+  "description": "Bent rod: a round profile swept along an open path with a straight, an arc and another straight. Exercises sweep with an open path on the XZ plane.",
+  "units": "mm",
+
+  "params": {
+    "rod_d": 4,
+    "rise": 20,
+    "bend_r": 10,
+    "reach": 15
+  },
+
+  "features": [
+    {
+      "id": "rod",
+      "type": "sweep",
+      "profile": { "plane": "XY", "shapes": [ { "type": "circle", "d": "rod_d" } ] },
+      "path": { "plane": "XZ", "start": [0, 0], "segments": [ "up rise", "arc bend_r, bend_r, -bend_r", "right reach" ] }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "iso"], "hidden_lines": false } }
+}

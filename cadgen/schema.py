@@ -182,10 +182,28 @@ class PathShape(ShapeBase):
     segments: list[str] = Field(min_length=2)
 
 
+class TextShape(ShapeBase):
+    type: Literal["text"]
+    text: str = Field(min_length=1)
+    size: Dim = Field(description="font size (cap height-ish) in document units")
+    center: Vec2 = (0, 0)
+    angle: Dim = 0
+    font: str = "Arial"
+    bold: bool = False
+
+
 Shape = Annotated[
-    Union[RectShape, CircleShape, SlotShape, PolygonShape, PointsShape, PathShape],
+    Union[RectShape, CircleShape, SlotShape, PolygonShape, PointsShape, PathShape, TextShape],
     Field(discriminator="type"),
 ]
+
+
+class OpenPath(Model):
+    """An open 2D path on a plane, used as a sweep path."""
+
+    plane: PlaneRef
+    start: Vec2 = (0, 0)
+    segments: list[str] = Field(min_length=1)
 
 
 class Sketch(Model):
@@ -264,7 +282,9 @@ class Hole(FeatureBase):
     type: Literal["hole"]
     face: FaceSel
     at: list[Vec2] = Field(min_length=1)
-    diameter: Dim
+    diameter: Dim | None = None
+    standard: str | None = Field(None, description='thread designation, e.g. "M3", "M8x1", "#6-32", "1/4-20"')
+    fit: Literal["tap", "close", "medium"] = Field("medium", description="hole size for a standard thread")
     through: bool = False
     depth: Dim | None = None
     counterbore: Counterbore | None = None
@@ -276,7 +296,42 @@ class Hole(FeatureBase):
             raise ValueError("hole: give exactly one of depth or through")
         if self.counterbore and self.countersink:
             raise ValueError("hole: counterbore and countersink are mutually exclusive")
+        if (self.diameter is None) == (self.standard is None):
+            raise ValueError("hole: give exactly one of diameter or standard")
         return self
+
+
+class Thread(FeatureBase):
+    type: Literal["thread"]
+    size: str = Field(description='thread designation, e.g. "M6", "M8x1", "1/4-20"')
+    face: FaceSel = Field(description="the cylindrical face to thread (a shank or a hole wall)")
+    kind: Literal["external", "internal"] = "external"
+    length: Dim | None = Field(None, description="threaded length; whole face if omitted")
+    near: Vec3 | None = Field(None, description="thread starts at the face end nearest this point")
+    hand: Literal["right", "left"] = "right"
+
+
+class Loft(FeatureBase):
+    type: Literal["loft"]
+    sections: list[Sketch] = Field(min_length=2, description="one closed shape per section, each on its own plane")
+    ruled: bool = False
+    op: Op = "add"
+
+
+class Sweep(FeatureBase):
+    type: Literal["sweep"]
+    profile: Sketch = Field(description="closed profile on a plane at the path start, perpendicular to it")
+    path: OpenPath
+    op: Op = "add"
+
+
+class PartRef(FeatureBase):
+    type: Literal["part"]
+    file: str = Field(description="another cadgen part file, relative to this file")
+    at: Vec3 = (0, 0, 0)
+    rotate: Vec3 = Field((0, 0, 0), description="degrees about X, Y, Z applied before translation")
+    params: dict[str, Dim] = Field({}, description="override the imported part's params")
+    op: Op = "add"
 
 
 class Mirror(FeatureBase):
@@ -310,9 +365,19 @@ class PatternFeature(FeatureBase):
 
 
 Feature = Annotated[
-    Union[Extrude, Revolve, Fillet, Chamfer, Shell, Hole, Mirror, PatternFeature],
+    Union[Extrude, Revolve, Fillet, Chamfer, Shell, Hole, Mirror, PatternFeature, Thread, Loft, Sweep, PartRef],
     Field(discriminator="type"),
 ]
+
+
+class Placement(Model):
+    """A part positioned in an assembly."""
+
+    file: str
+    name: str | None = Field(None, description="defaults to the file's part name")
+    at: Vec3 = (0, 0, 0)
+    rotate: Vec3 = (0, 0, 0)
+    params: dict[str, Dim] = {}
 
 
 # --- outputs -------------------------------------------------------------------------------
@@ -357,10 +422,17 @@ class DrawingOptions(Model):
     title_block: TitleBlock = TitleBlock()
 
 
+class ThreeMfOptions(Model):
+    tolerance: Dim = 0.01
+    angular_tolerance: Dim = 0.1
+    part_number: str | None = None
+    name: str | None = None
+
+
 class Outputs(Model):
     step: bool = True
     stl: bool | StlOptions = False
-    three_mf: bool = Field(False, alias="3mf")
+    three_mf: bool | ThreeMfOptions = Field(False, alias="3mf")
     drawing: bool | DrawingOptions = False
     png: bool = True
 
@@ -373,13 +445,16 @@ class Document(Model):
     description: str = ""
     units: Literal["mm", "in"] = "mm"
     params: dict[str, Dim] = {}
-    features: list[Feature] = Field(min_length=1)
+    parts: list[Placement] = Field([], description="assembly: other part files placed in this one")
+    features: list[Feature] = []
     outputs: Outputs = Outputs()
 
     @model_validator(mode="after")
     def _check(self):
         if self.schema_version != SCHEMA_VERSION:
             raise ValueError(f'schema must be "{SCHEMA_VERSION}", got "{self.schema_version}"')
+        if not self.features and not self.parts:
+            raise ValueError("a document needs at least one feature or one placed part")
         seen: set[str] = set()
         for f in self.features:
             if f.id in seen:
@@ -411,6 +486,14 @@ def _feature_refs(f: FeatureBase) -> list[str]:
 
     if isinstance(f, (Extrude, Revolve)):
         from_plane(f.sketch.plane)
+    elif isinstance(f, Loft):
+        for s in f.sections:
+            from_plane(s.plane)
+    elif isinstance(f, Sweep):
+        from_plane(f.profile.plane)
+        from_plane(f.path.plane)
+    elif isinstance(f, Thread):
+        from_face(f.face)
     elif isinstance(f, (Fillet, Chamfer)):
         from_edge(f.edges)
     elif isinstance(f, Shell):

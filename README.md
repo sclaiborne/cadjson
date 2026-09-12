@@ -12,12 +12,14 @@ Engine: [build123d](https://build123d.readthedocs.io/) on the OpenCascade kernel
 
 ## Status
 
-Phases 1 to 3 done: the feature tree builds and exports; drawings include per-view SVG/DXF
-with hidden lines, section views, and a fully annotated sheet (dimensions, callouts, title
-block) as PDF/SVG/DXF; and `export-fusion` writes a Fusion 360 script that rebuilds the part
-with a native parametric timeline ([docs/fusion-export.md](docs/fusion-export.md)). See
-[PLANNING.md](PLANNING.md) for the option survey and plan, and
-[docs/schema-v0.md](docs/schema-v0.md) for the format.
+Phases 1 to 5 done: the feature tree builds and exports (extrude, revolve, fillet, chamfer,
+shell, holes with standard thread sizes, real ISO threads, mirror, patterns, loft, sweep,
+text, imported parts, assemblies); drawings include per-view SVG/DXF with hidden lines,
+section views, and a fully annotated sheet (dimensions, callouts, title block) as
+PDF/SVG/DXF; `export-fusion` writes a Fusion 360 script that rebuilds a part with a native
+parametric timeline ([docs/fusion-export.md](docs/fusion-export.md)); `export-python` writes
+the equivalent build123d script. See [PLANNING.md](PLANNING.md) for the option survey and
+plan, and [docs/schema-v0.md](docs/schema-v0.md) for the format.
 
 Note: the sheet generator (draftwright, AGPL-3) pins build123d to 0.10 on Python 3.12.
 

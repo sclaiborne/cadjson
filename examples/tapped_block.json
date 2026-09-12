@@ -1,0 +1,45 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "tapped_block",
+  "description": "Block with an M6 tapped through hole (real internal thread), two M3 clearance holes, and an engraved label. Exercises standard hole sizes, internal threads, and text.",
+  "units": "mm",
+
+  "params": {
+    "w": 30,
+    "d": 20,
+    "h": 12,
+    "engrave": 0.6
+  },
+
+  "features": [
+    {
+      "id": "block",
+      "type": "extrude", "distance": "h",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "rect", "w": "w", "h": "d" } ] }
+    },
+    {
+      "id": "tap_hole",
+      "type": "hole", "face": "top", "at": [[0, 0]], "standard": "M6", "fit": "tap", "through": true
+    },
+    {
+      "id": "thread",
+      "type": "thread", "size": "M6", "kind": "internal",
+      "face": { "of": "tap_hole", "geom": "cylinder" }
+    },
+    {
+      "id": "clearance",
+      "type": "hole", "face": "top", "at": [[-11, 0], [11, 0]], "standard": "M3", "fit": "medium", "through": true
+    },
+    {
+      "id": "label",
+      "type": "extrude", "op": "cut", "distance": "-engrave",
+      "sketch": { "plane": { "face": "top" }, "shapes": [
+        { "type": "text", "text": "M6", "size": 4, "center": [0, -7] }
+      ] }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "3mf": { "part_number": "CG-010" },
+               "drawing": { "views": ["top", "iso"], "hidden_lines": false, "sections": [ { "name": "A", "plane": "XZ" } ] } }
+}

@@ -37,9 +37,10 @@ Any field documented as a *dim* accepts either a number or a string expression:
 ```
 
 Expression grammar, deliberately tiny: numbers, param names, `+ - * /`, parentheses, unary
-minus, and the functions `min`, `max`, `abs`, `sqrt`. Params may reference earlier params.
-Nothing else: no Python, no conditionals. If the grammar ever needs to grow beyond this, that
-is the signal to reconsider "script instead of JSON".
+minus, the constant `pi`, and the functions `min`, `max`, `abs`, `sqrt`, `floor`, `ceil`,
+`round`, and `sin`, `cos`, `tan`, `asin`, `acos`, `atan` (degrees). Params may reference
+each other in any order. Nothing else: no Python, no conditionals. If the grammar ever needs
+to grow beyond this, that is the signal to reconsider "script instead of JSON".
 
 `params` is optional. A part with only literal numbers is valid.
 
@@ -162,9 +163,67 @@ Sketch-level patterns (section 6) cover most cases and are simpler; feature-leve
 are for repeating fillets, chamfers, or multi-feature groups. Phase 1 implements sketch-level
 first.
 
-### 5.8 Later (not v0)
+### 5.8 `hole` with a standard thread size
 
-`loft`, `sweep`, `thread`, `text`, boolean with another part file, assemblies.
+```jsonc
+{ "id": "tap", "type": "hole", "face": "top", "at": [[0, 0]], "standard": "M6", "fit": "tap", "through": true }
+{ "id": "clr", "type": "hole", "face": "top", "at": [[10, 0]], "standard": "#6-32", "fit": "medium", "depth": 8 }
+```
+
+`standard` replaces `diameter`: metric (`M3`, `M8x1` for a fine pitch) or unified (`#4-40`,
+`1/4-20`). `fit` is `tap` (tap drill), `close` or `medium` (clearance). Sizes are always in
+mm regardless of the document units.
+
+### 5.9 `thread`
+
+Real ISO thread geometry (via bd_warehouse), for printing or for a faithful model.
+
+```jsonc
+{ "id": "thread", "type": "thread", "size": "M6", "kind": "external",
+  "face": { "of": "shank", "geom": "cylinder" }, "length": 15, "near": [0, 0, -20], "hand": "right" }
+{ "id": "tapped", "type": "thread", "size": "M6", "kind": "internal", "face": { "of": "tap_hole", "geom": "cylinder" } }
+```
+
+`face` is the cylindrical face to thread. External threads expect a shank at the major
+diameter (it is cut to the root and the thread fused on); internal threads expect a hole at
+the tap-drill size (it is opened to the major diameter and the thread fused in). `length`
+defaults to the whole face; `near` picks which end the thread starts from.
+
+### 5.10 `loft`
+
+```jsonc
+{ "id": "body", "type": "loft", "ruled": false, "sections": [
+    { "plane": "XY", "shapes": [ { "type": "circle", "d": 12 } ] },
+    { "plane": { "base": "XY", "offset": 40 }, "shapes": [ { "type": "circle", "d": 50 } ] } ] }
+```
+
+Each section is a sketch with exactly one closed shape, in order along the loft.
+
+### 5.11 `sweep`
+
+```jsonc
+{ "id": "rod", "type": "sweep",
+  "profile": { "plane": "XY", "shapes": [ { "type": "circle", "d": 4 } ] },
+  "path": { "plane": "XZ", "start": [0, 0], "segments": [ "up 20", "arc 10, 10, -10", "right 15" ] } }
+```
+
+The path is an open `path` (same segment grammar, no `close`) on a plane. Put the profile at
+the path start, perpendicular to it. Bend radii must exceed the profile's half-width.
+
+### 5.12 `part` (import another part file)
+
+```jsonc
+{ "id": "cavity", "type": "part", "file": "spacer.json", "op": "cut", "at": [0, 0, 5],
+  "rotate": [0, 0, 90], "params": { "outer_d": 22 } }
+```
+
+Builds the referenced file (relative to this one, with optional param overrides), places it,
+and combines it with the body. Use `op: "add"` to merge a library part in, `cut` for a cavity
+or a clearance.
+
+### 5.13 Not yet
+
+Sketch constraints, variable fillets, drafts on faces, helix/coil, surfaces.
 
 ## 6. Sketches
 
@@ -183,6 +242,7 @@ profile). Every shape may carry a `pattern`. All 2D coordinates are `[u, v]` on 
 | `polygon` | `sides`, `d` (across corners) or `flat` (across flats) | `center`, optional `angle` |
 | `points` | `points: [[u,v], ...]` closed polyline | absolute |
 | `path` | `start: [u,v]`, `segments: [...]` | see below |
+| `text` | `text`, `size`, optional `font` (default Arial), `bold` | `center`, optional `angle`; emboss with extrude add, engrave with a negative-distance cut |
 
 `path` segments are strings, one move each, so a profile reads like a sketch walk-through:
 
@@ -249,13 +309,30 @@ that merely got trimmed by a cut do not belong to the cut; the cut's own walls d
 `cadgen info part.json` prints every face and edge of the finished part with its normal,
 centre, and size, which is the quickest way to work out a selector.
 
+## 7b. Assemblies: `parts`
+
+```jsonc
+{ "schema": "cadgen/0.1", "name": "stack",
+  "params": { "pitch": 20 },
+  "parts": [
+    { "file": "hex_standoff.json", "name": "left",  "at": [0, 0, 0] },
+    { "file": "hex_standoff.json", "name": "right", "at": ["pitch", 0, 0], "rotate": [0, 0, 30] },
+    { "file": "spacer.json", "at": ["pitch / 2", 0, 12], "params": { "outer_d": 30 } } ],
+  "features": [ ...optional, model the host part here... ] }
+```
+
+Placed parts stay separate, named solids in the STEP file (and merge in the STL). The
+document's own `features` model a host body; they do not see the placed parts. To combine
+geometry, use the `part` feature instead. Param overrides let one library file serve many
+sizes. References are relative to the file; cycles are errors.
+
 ## 8. Outputs
 
 ```jsonc
 "outputs": {
   "step": true,
   "stl":  { "tolerance": 0.01, "angular_tolerance": 0.1 },   // or true for defaults
-  "3mf":  true,
+  "3mf":  { "part_number": "CG-010", "name": "Board" },       // or true; metadata lands in the 3MF
   "drawing": {
     "views": ["front", "top", "right", "iso"],   // also "left", "back", "bottom"; one file per view
     "hidden_lines": true,

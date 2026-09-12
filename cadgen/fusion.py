@@ -149,6 +149,8 @@ class FusionExporter:
 
     def export(self) -> str:
         doc = self.doc
+        if doc.parts:
+            raise CadgenError("assemblies (parts) cannot be exported to Fusion yet; export the individual parts")
         for name, expr in doc.params.items():
             unit = "mm" if self.kinds[name] == "len" else ""
             try:
@@ -195,6 +197,11 @@ class FusionExporter:
             for wire in wires:
                 for edge in wire.edges():
                     kind = edge.geom_type.name
+                    if kind not in ("LINE", "CIRCLE"):
+                        raise CadgenError(
+                            f"sketch contains {kind.lower()} curves (text?) which the Fusion exporter cannot write yet",
+                            self.ctx.feature_id,
+                        )
                     if kind == "LINE":
                         self.emit(f"H.line({var}, {_pt(edge.position_at(0))}, {_pt(edge.position_at(1))})")
                     elif kind == "CIRCLE" and edge.is_closed:
@@ -267,6 +274,9 @@ class FusionExporter:
             fkey = self._face_keys(faces)[0]
             pts = [_pt(plane.from_local_coords((*ctx.vec2(p), 0))) for p in feat.at]
             depth = "None" if feat.through else repr(self._len(feat.depth))
+            from cadgen.build import hole_diameter
+
+            diameter = self._len(feat.diameter) if feat.diameter is not None else f"{hole_diameter(feat, ctx):g} mm"
             cb = "None"
             cs = "None"
             if feat.counterbore:
@@ -274,7 +284,7 @@ class FusionExporter:
             if feat.countersink:
                 cs = repr((self._len(feat.countersink.diameter), self._angle(feat.countersink.angle)))
             self.emit(
-                f"F[{fid!r}] = H.hole({fkey!r}, {pts!r}, {self._len(feat.diameter)!r}, depth={depth}, "
+                f"F[{fid!r}] = H.hole({fkey!r}, {pts!r}, {diameter!r}, depth={depth}, "
                 f"counterbore={cb}, countersink={cs})"
             )
         elif isinstance(feat, Mirror):
@@ -301,7 +311,10 @@ class FusionExporter:
                     f"{self._angle(feat.angle)!r})"
                 )
         else:
-            raise CadgenError(f"feature type {feat.type!r} cannot be exported to Fusion yet", fid)
+            raise CadgenError(
+                f"feature type {feat.type!r} cannot be exported to Fusion yet", fid,
+                ["supported: extrude, revolve, fillet, chamfer, shell, hole, mirror, pattern"],
+            )
 
     def _render(self) -> str:
         notes = "\n".join(f"#   - {n}" for n in self.notes) or "#   (none)"

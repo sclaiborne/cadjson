@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from build123d import Axis, Part, Vector
+from build123d import Axis, Compound, Part, Vector
 from pydantic import ValidationError
 
 from cadgen import export
@@ -22,14 +22,21 @@ from cadgen.schema import (
     Extrude,
     Fillet,
     Hole,
+    Loft,
     Mirror,
+    PartRef,
     PatternFeature,
     Revolve,
     Shell,
     StlOptions,
+    Sweep,
+    Thread,
+    ThreeMfOptions,
 )
 from cadgen.selectors import Selection
-from cadgen.sketch import build_sketch
+from cadgen.sketch import build_sketch, open_path_wire
+
+SOURCE_PATHS: dict[int, Path] = {}  # id(document) -> file it was loaded from (for relative part refs)
 
 
 def load_document(path: Path | str) -> Document:
@@ -38,7 +45,56 @@ def load_document(path: Path | str) -> Document:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise CadgenError(f"{path}: not valid JSON: {exc}") from None
-    return parse_document(raw, source=str(path))
+    doc = parse_document(raw, source=str(path))
+    SOURCE_PATHS[id(doc)] = path.resolve()
+    return doc
+
+
+def source_dir(doc: Document) -> Path:
+    src = SOURCE_PATHS.get(id(doc))
+    return src.parent if src else Path.cwd()
+
+
+class _Imports:
+    """Builds referenced part files with caching and cycle detection."""
+
+    def __init__(self):
+        self.cache: dict[tuple, Part] = {}
+        self.stack: list[Path] = []
+
+    def build(self, doc: Document, file: str, overrides: dict, ctx: Context, fid: str | None) -> Part:
+        path = (source_dir(doc) / file).resolve()
+        if not path.exists():
+            raise CadgenError(f"part file not found: {path}", fid)
+        if path in self.stack:
+            raise CadgenError("part files reference each other in a cycle: " + " -> ".join(str(p) for p in self.stack + [path]), fid)
+        resolved = {k: ctx.num(v) for k, v in overrides.items()}
+        key = (path, tuple(sorted(resolved.items())))
+        if key not in self.cache:
+            sub = load_document(path)
+            unknown = set(resolved) - set(sub.params)
+            if unknown:
+                raise CadgenError(f"{path.name} has no params named {sorted(unknown)}", fid,
+                                  [f"its params are: {', '.join(sub.params) or '(none)'}"])
+            merged = {**sub.params, **resolved}
+            sub2 = sub.model_copy(update={"params": merged})
+            SOURCE_PATHS[id(sub2)] = path
+            self.stack.append(path)
+            try:
+                self.cache[key] = build_document(sub2, imports=self).part
+            finally:
+                self.stack.pop()
+        return self.cache[key]
+
+
+def _transform(shape: Part, at: Vector, rotate) -> Part:
+    out = shape
+    for axis, deg in zip((Axis.X, Axis.Y, Axis.Z), rotate):
+        if abs(deg) > 1e-12:
+            out = out.rotate(axis, deg)
+    if at.length > 1e-12:
+        out = out.translate(at)
+    return out
 
 
 def parse_document(raw: dict, source: str = "document") -> Document:
@@ -73,20 +129,39 @@ class BuildResult:
         return "\n".join(lines)
 
 
-def build_document(doc: Document) -> BuildResult:
+def build_document(doc: Document, imports: _Imports | None = None) -> BuildResult:
     ctx = Context(doc.params, doc.units)
     builder = Builder()
+    _DOC_OF[id(builder)] = doc
+    imports = imports or _Imports()
     timings: dict[str, float] = {}
     for feat in doc.features:
         ctx.feature_id = feat.id
         t0 = time.perf_counter()
-        _run_feature(feat, ctx, builder)
+        _run_feature(feat, ctx, builder, imports)
         timings[feat.id] = time.perf_counter() - t0
+    shape = builder.solid
+    if doc.parts:
+        # Placed parts stay separate solids; the document's own features model the host body.
+        t0 = time.perf_counter()
+        placed = []
+        for i, pl in enumerate(doc.parts):
+            label = pl.name or Path(pl.file).stem
+            ctx.feature_id = f"parts[{i}]"
+            sub = imports.build(doc, pl.file, pl.params, ctx, ctx.feature_id)
+            sub = _transform(sub, ctx.vec3(pl.at), [ctx.num(r) for r in pl.rotate])
+            sub.label = label
+            placed.append(sub)
+        if shape is not None:
+            shape.label = doc.name
+            placed.append(shape)
+        shape = Part(children=placed) if len(placed) > 1 else placed[0]
+        timings["parts"] = time.perf_counter() - t0
     ctx.feature_id = None
-    return BuildResult(doc, builder.solid, builder, timings)
+    return BuildResult(doc, shape, builder, timings)
 
 
-def _run_feature(feat, ctx: Context, b: Builder) -> None:
+def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None) -> None:
     fid = feat.id
 
     def selection() -> Selection:
@@ -132,10 +207,38 @@ def _run_feature(feat, ctx: Context, b: Builder) -> None:
         cb = (ctx.length(feat.counterbore.diameter), ctx.length(feat.counterbore.depth)) if feat.counterbore else None
         cs = (ctx.length(feat.countersink.diameter), ctx.num(feat.countersink.angle)) if feat.countersink else None
         b.hole(
-            fid, plane, pts, ctx.length(feat.diameter),
+            fid, plane, pts, hole_diameter(feat, ctx),
             depth=None if feat.depth is None else ctx.length(feat.depth), through=feat.through,
             counterbore=cb, countersink=cs,
         )
+    elif isinstance(feat, Thread):
+        from cadgen.standards import thread_spec
+
+        try:
+            spec = thread_spec(feat.size)
+        except CadgenError as exc:
+            raise CadgenError(exc.message, fid, exc.hints) from None
+        fs = faces(feat.face)
+        if len(fs) != 1:
+            raise CadgenError(f"thread face selector matched {len(fs)} faces, need exactly one", fid)
+        b.thread(
+            fid, fs[0], spec, feat.kind == "external",
+            None if feat.length is None else ctx.length(feat.length),
+            None if feat.near is None else ctx.vec3(feat.near), feat.hand,
+        )
+    elif isinstance(feat, Loft):
+        sections = [plane_of(s.plane) * build_sketch(s, ctx) for s in feat.sections]
+        b.loft(fid, sections, feat.ruled, feat.op)
+    elif isinstance(feat, Sweep):
+        profile = plane_of(feat.profile.plane) * build_sketch(feat.profile, ctx)
+        path = plane_of(feat.path.plane) * open_path_wire(feat.path, ctx)
+        b.sweep(fid, profile, path, feat.op)
+    elif isinstance(feat, PartRef):
+        imports = imports or _Imports()
+        doc = _DOC_OF.get(id(b))
+        shape = imports.build(doc, feat.file, feat.params, ctx, fid)
+        shape = _transform(shape, ctx.vec3(feat.at), [ctx.num(r) for r in feat.rotate])
+        b.place(fid, shape, feat.op)
     elif isinstance(feat, Mirror):
         b.mirror(fid, plane_of(feat.plane), feat.features)
     elif isinstance(feat, PatternFeature):
@@ -168,6 +271,21 @@ def _face_plane_ref(face_sel):
     return FacePlane(face=face_sel)
 
 
+def hole_diameter(feat: Hole, ctx: Context) -> float:
+    """Explicit diameter, or the tap/clearance size for a standard thread (always in mm)."""
+    if feat.diameter is not None:
+        return ctx.length(feat.diameter)
+    from cadgen.standards import thread_spec
+
+    try:
+        return thread_spec(feat.standard).hole_diameter(feat.fit)
+    except CadgenError as exc:
+        raise CadgenError(exc.message, feat.id, exc.hints) from None
+
+
+_DOC_OF: dict[int, Document] = {}  # id(builder) -> document, so part refs resolve relative paths
+
+
 def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = None, stl: bool | None = None,
                   png: bool | None = None, views: list[str] | None = None, sheet: bool | None = None) -> list[Path]:
     """Write the outputs requested by the document, with optional CLI overrides."""
@@ -189,7 +307,11 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
     if stl if stl is not None else bool(out.stl):
         files.append(export.write_stl(part, out_dir / f"{name}.stl", tol, ang))
     if out.three_mf:
-        files.append(export.write_3mf(part, out_dir / f"{name}.3mf", tol, ang))
+        mf = out.three_mf if isinstance(out.three_mf, ThreeMfOptions) else ThreeMfOptions()
+        files.append(export.write_3mf(
+            part, out_dir / f"{name}.3mf", ctx.length(mf.tolerance), ctx.num(mf.angular_tolerance),
+            name=mf.name or name, part_number=mf.part_number,
+        ))
 
     drawing = out.drawing if isinstance(out.drawing, DrawingOptions) else (DrawingOptions() if out.drawing else None)
     view_names = views if views is not None else (drawing.views if drawing else [])

@@ -41,6 +41,8 @@ def test_report_written(tmp_path):
 @pytest.mark.parametrize("path", ALL, ids=[p.stem for p in ALL])
 def test_python_export_rebuilds_same_volume(path, tmp_path):
     doc = load_document(path)
+    if doc.parts or any(f.type == "part" for f in doc.features):
+        pytest.skip("assemblies are not exported to scripts")
     expected = build_document(doc).part.volume
     script = export_python(doc, tmp_path)
     proc = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=300)

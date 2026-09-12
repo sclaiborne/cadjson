@@ -26,6 +26,7 @@ from cadgen.schema import (
     Mirror,
     OffsetPlane,
     PathShape,
+    Loft,
     PatternFeature,
     PointsShape,
     PolygonShape,
@@ -33,9 +34,12 @@ from cadgen.schema import (
     Revolve,
     Shell,
     SlotShape,
+    Sweep,
+    TextShape,
+    Thread,
 )
 from cadgen.selectors import Selection
-from cadgen.sketch import _pattern_locations
+from cadgen.sketch import _pattern_locations, open_path_wire
 
 
 def _n(v: float) -> str:
@@ -97,6 +101,11 @@ class PythonExporter:
         if isinstance(shape, PointsShape):
             pts = ", ".join(f"({_n(u)}, {_n(v)})" for u, v in (ctx.vec2(p) for p in shape.points))
             return f"Polygon({pts}, align=None)"
+        if isinstance(shape, TextShape):
+            cx, cy = ctx.vec2(shape.center)
+            style = "FontStyle.BOLD" if shape.bold else "FontStyle.REGULAR"
+            return (f"Location(({_n(cx)}, {_n(cy)}, 0), {_n(ctx.num(shape.angle))}) * Text({shape.text!r}, "
+                    f"{_n(ctx.length(shape.size))}, font={shape.font!r}, font_style={style}, align=(Align.CENTER, Align.CENTER))")
         if isinstance(shape, PathShape):
             from cadgen.sketch import _path
 
@@ -192,9 +201,47 @@ class PythonExporter:
         elif isinstance(feat, Shell):
             openings = "None" if feat.remove is None else f"_faces(part, {self._face_keys(self._selection().faces(feat.remove))})"
             self.emit(f"part = offset(part, amount={_n(-ctx.length(feat.thickness))}, openings={openings})")
+        elif isinstance(feat, Loft):
+            names = []
+            for i, sec in enumerate(feat.sections):
+                plane = self._plane(sec.plane)
+                self._sketch_code(sec)
+                self.emit(f"sec{i} = {self._plane_code(sec.plane, plane)} * sk")
+                names.append(f"sec{i}.faces()[0]")
+            self.emit(f"tool = loft([{', '.join(names)}], ruled={feat.ruled})")
+            self._combine(feat.op)
+        elif isinstance(feat, Sweep):
+            pplane = self._plane(feat.profile.plane)
+            self._sketch_code(feat.profile)
+            self.emit(f"profile = ({self._plane_code(feat.profile.plane, pplane)} * sk).faces()[0]")
+            path_plane = self._plane(feat.path.plane)
+            wire = path_plane * open_path_wire(feat.path, ctx)
+            parts = []
+            for e in wire.edges():
+                if e.geom_type.name == "LINE":
+                    parts.append(f"Line({_v(e.position_at(0))}, {_v(e.position_at(1))})")
+                else:
+                    parts.append(f"ThreePointArc({_v(e.position_at(0))}, {_v(e.position_at(0.5))}, {_v(e.position_at(1))})")
+            self.emit(f"path = Wire([{', '.join(parts)}])")
+            self.emit("tool = sweep(profile, path=path, transition=Transition.ROUND)")
+            self._combine(feat.op)
+        elif isinstance(feat, Thread):
+            from cadgen.standards import thread_spec
+
+            spec = thread_spec(feat.size)
+            face = self._selection().faces(feat.face)[0]
+            keys = self._face_keys([face])
+            ext = feat.kind == "external"
+            self.emit("from bd_warehouse.thread import IsoThread")
+            self.emit(f"face = _faces(part, {keys})[0]")
+            self.emit(f"part = _thread(part, face, major={_n(spec.major)}, pitch={_n(spec.pitch)}, external={ext}, "
+                      f"length={'None' if feat.length is None else _n(ctx.length(feat.length))}, "
+                      f"near={'None' if feat.near is None else _v(ctx.vec3(feat.near))}, hand={feat.hand!r})")
         elif isinstance(feat, Hole):
             plane = self._plane(FacePlane(face=feat.face))
-            r = ctx.length(feat.diameter) / 2
+            from cadgen.build import hole_diameter
+
+            r = hole_diameter(feat, ctx) / 2
             amount = self.builder.through_distance(plane) if feat.through else ctx.length(feat.depth)
             self.emit(f"plane = {self._plane_code(FacePlane(face=feat.face), plane)}")
             self.emit("tool = None")
@@ -248,6 +295,8 @@ class PythonExporter:
         self.emit()
 
     def export(self) -> str:
+        if self.doc.parts:
+            raise CadgenError("assemblies (parts) cannot be exported to a script yet; export the individual parts")
         for feat in self.doc.features:
             self.ctx.feature_id = feat.id
             self._feature(feat)
@@ -306,6 +355,32 @@ def _apply(part, delta, transform):
     if removed is not None:
         part = part - transform(removed)
     return part
+
+
+def _thread(part, face, major, pitch, external, length, near, hand):
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from bd_warehouse.thread import IsoThread
+
+    cyl = BRepAdaptor_Surface(face.wrapped).Cylinder()
+    ax = cyl.Axis()
+    d = Vector(ax.Direction().X(), ax.Direction().Y(), ax.Direction().Z()).normalized()
+    p = Vector(ax.Location().X(), ax.Location().Y(), ax.Location().Z())
+    ts = [(Vector(v.X, v.Y, v.Z) - p).dot(d) for v in face.vertices()]
+    tmin, tmax = min(ts), max(ts)
+    start, direction = tmin, d
+    if near is not None and (Vector(*near) - (p + d * tmax)).length < (Vector(*near) - (p + d * tmin)).length:
+        start, direction = tmax, d * -1
+    L = (tmax - tmin) if length is None else min(length, tmax - tmin)
+    n = direction
+    x_dir = Vector(1, 0, 0) if abs(n.Z) > 0.999 else Vector(0, 0, 1).cross(n).normalized()
+    plane = Plane(origin=p + d * start, x_dir=x_dir, z_dir=n)
+    th = IsoThread(major_diameter=major, pitch=pitch, length=L, external=external, hand=hand, end_finishes=("fade", "fade"))
+    th = plane * th.translate((0, 0, -th.bounding_box().min.Z))
+    align = (Align.CENTER, Align.CENTER, Align.MIN)
+    if external:
+        ring = Cylinder(major / 2 + 0.05, L, align=align) - Cylinder(th.min_radius, L, align=align)
+        return (part - (plane * ring)) + th
+    return (part - (plane * Cylinder(major / 2, L, align=align))) + th
 
 
 part = None
