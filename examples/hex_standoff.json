@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "hex_standoff",
+  "description": "M3 hex standoff: hexagonal body, blind hole from the top, through hole from the bottom counterbored, chamfered ends. Exercises polygon extrude, blind and counterbored holes from different faces, and of_face chamfers.",
+  "units": "mm",
+
+  "params": {
+    "flats": 5.5,
+    "length": 12,
+    "tap_d": 2.5,
+    "tap_depth": 6,
+    "clear_d": 3.2,
+    "cb_d": 5,
+    "cb_depth": 1
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "extrude", "distance": "length",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "polygon", "sides": 6, "flat": "flats" } ] }
+    },
+    {
+      "id": "tap_hole",
+      "type": "hole", "face": "top", "at": [[0, 0]], "diameter": "tap_d", "depth": "tap_depth"
+    },
+    {
+      "id": "clear_hole",
+      "type": "hole", "face": "bottom", "at": [[0, 0]], "diameter": "clear_d", "depth": "length - tap_depth",
+      "counterbore": { "diameter": "cb_d", "depth": "cb_depth" }
+    },
+    {
+      "id": "end_chamfers",
+      "type": "chamfer", "length": 0.4,
+      "edges": { "of_face": "top", "geom": "line" }
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "top", "iso"], "hidden_lines": true, "sections": [ { "name": "A", "plane": "XZ" } ] } }
+}

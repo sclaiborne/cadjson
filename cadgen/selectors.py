@@ -54,7 +54,9 @@ def face_sig(face: Face) -> tuple:
         n = face.normal_at()
         return ("PLANE", *_r(n), round(face.center().dot(n), _R) + 0.0)
     if kind == "CYLINDER":
-        cyl = face.geom_adaptor().Cylinder()
+        from OCP.BRepAdaptor import BRepAdaptor_Surface
+
+        cyl = BRepAdaptor_Surface(face.wrapped).Cylinder()
         ax = cyl.Axis()
         d = _sign_normalized(Vector(ax.Direction().X(), ax.Direction().Y(), ax.Direction().Z()))
         p = Vector(ax.Location().X(), ax.Location().Y(), ax.Location().Z())

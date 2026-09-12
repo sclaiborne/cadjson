@@ -250,3 +250,18 @@ takes 3 to 5 s per sheet.
 - [ ] extrude taper
 
 See `docs/fusion-export.md`.
+
+## 12. Phase 4 status (2026-09-12)
+
+- [x] Claude Code skill `.claude/skills/cadgen/SKILL.md`: workflow (validate, build, read
+      report.json, look at the PNGs), one-page format reference, recipes, gotchas
+- [x] JSON Schema committed at `schema/cadgen-0.1.schema.json` (`cadgen schema -o`), test keeps
+      it current; parts may carry `"$schema"` for editor validation
+- [x] `out/<name>/report.json` on every build: volume, bbox, params, per-feature timings, files
+- [x] `cadgen info --json`
+- [x] `cadgen export-python`: standalone build123d script; tested to rebuild every example to
+      the same volume
+- [x] regression corpus grown to 9 examples (knob: revolve with arc + polar feature pattern;
+      plate_inch: inch units + countersinks; hex_standoff: blind and counterbored holes from
+      opposite faces)
+- [ ] MCP server (not requested; the CLI + skill is the agent interface for now)

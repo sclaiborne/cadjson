@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "knob",
+  "description": "Round knob: revolved profile with an arc, hex socket cut from the top, one grip groove patterned six times. Exercises path arcs, revolve about an explicit axis, polygon cuts on a face plane, and feature-level polar patterns.",
+  "units": "mm",
+
+  "params": {
+    "d": 30,
+    "h": 14,
+    "skirt": 3,
+    "socket_flat": 6,
+    "socket_depth": 5,
+    "groove_w": 3,
+    "groove_d": 1.5,
+    "groove_count": 6
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "revolve",
+      "axis": { "point": [0, 0], "dir": [0, 1] },
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "path", "start": [0, 0], "segments": [
+          "right d / 2", "up skirt", "arc -(d / 2 - 8), h - skirt, -20", "left 8", "close"
+        ] }
+      ] }
+    },
+    {
+      "id": "socket",
+      "type": "extrude", "op": "cut", "distance": "-socket_depth",
+      "sketch": { "plane": { "face": "top" }, "shapes": [
+        { "type": "polygon", "sides": 6, "flat": "socket_flat" }
+      ] }
+    },
+    {
+      "id": "groove",
+      "type": "extrude", "op": "cut", "distance": "groove_d",
+      "sketch": { "plane": { "base": "XZ", "offset": "-(d / 2)" }, "shapes": [
+        { "type": "rect", "w": "groove_w", "h": "h", "center": [0, "h / 2"] }
+      ] }
+    },
+    {
+      "id": "grooves",
+      "type": "pattern", "kind": "polar", "features": ["groove"], "axis": "Z", "count": "groove_count"
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "top", "iso"], "hidden_lines": true } }
+}

@@ -1,0 +1,3318 @@
+{
+  "$defs": {
+    "AxisRef2": {
+      "additionalProperties": false,
+      "properties": {
+        "point": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Point",
+          "type": "array"
+        },
+        "dir": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Dir",
+          "type": "array"
+        }
+      },
+      "required": [
+        "point",
+        "dir"
+      ],
+      "title": "AxisRef2",
+      "type": "object"
+    },
+    "AxisRef3": {
+      "additionalProperties": false,
+      "properties": {
+        "point": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Point",
+          "type": "array"
+        },
+        "dir": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Dir",
+          "type": "array"
+        }
+      },
+      "required": [
+        "point",
+        "dir"
+      ],
+      "title": "AxisRef3",
+      "type": "object"
+    },
+    "Chamfer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "chamfer",
+          "title": "Type",
+          "type": "string"
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Length"
+        },
+        "length2": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Length2"
+        },
+        "edges": {
+          "$ref": "#/$defs/EdgeSelector"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "length",
+        "edges"
+      ],
+      "title": "Chamfer",
+      "type": "object"
+    },
+    "CircleShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "circle",
+          "title": "Type",
+          "type": "string"
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "D"
+        },
+        "r": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "R"
+        },
+        "center": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "CircleShape",
+      "type": "object"
+    },
+    "Counterbore": {
+      "additionalProperties": false,
+      "properties": {
+        "diameter": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Diameter"
+        },
+        "depth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Depth"
+        }
+      },
+      "required": [
+        "diameter",
+        "depth"
+      ],
+      "title": "Counterbore",
+      "type": "object"
+    },
+    "Countersink": {
+      "additionalProperties": false,
+      "properties": {
+        "diameter": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Diameter"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 90,
+          "title": "Angle"
+        }
+      },
+      "required": [
+        "diameter"
+      ],
+      "title": "Countersink",
+      "type": "object"
+    },
+    "DrawingOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "views": {
+          "default": [
+            "front",
+            "top",
+            "right",
+            "iso"
+          ],
+          "items": {
+            "enum": [
+              "front",
+              "back",
+              "top",
+              "bottom",
+              "left",
+              "right",
+              "iso"
+            ],
+            "type": "string"
+          },
+          "title": "Views",
+          "type": "array"
+        },
+        "hidden_lines": {
+          "default": true,
+          "title": "Hidden Lines",
+          "type": "boolean"
+        },
+        "format": {
+          "default": [
+            "svg"
+          ],
+          "items": {
+            "enum": [
+              "svg",
+              "dxf",
+              "pdf"
+            ],
+            "type": "string"
+          },
+          "title": "Format",
+          "type": "array"
+        },
+        "scale": {
+          "anyOf": [
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": "auto",
+          "title": "Scale"
+        },
+        "sections": {
+          "default": [],
+          "description": "section views, one file each (own renderer)",
+          "items": {
+            "$ref": "#/$defs/SectionSpec"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "sheet": {
+          "default": false,
+          "description": "full annotated drawing sheet via draftwright",
+          "title": "Sheet",
+          "type": "boolean"
+        },
+        "dimensions": {
+          "default": false,
+          "description": "automatic dimensions on the sheet",
+          "title": "Dimensions",
+          "type": "boolean"
+        },
+        "projection": {
+          "default": "third",
+          "enum": [
+            "third",
+            "first"
+          ],
+          "title": "Projection",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "sheet size, e.g. \"A4\", \"A3\"; automatic if omitted",
+          "title": "Page"
+        },
+        "title_block": {
+          "$ref": "#/$defs/TitleBlock",
+          "default": {
+            "title": null,
+            "number": "DWG-001",
+            "revision": "A",
+            "material": "",
+            "tolerance": null,
+            "drawn_by": "",
+            "company": "",
+            "date": ""
+          }
+        }
+      },
+      "title": "DrawingOptions",
+      "type": "object"
+    },
+    "EdgeSelector": {
+      "additionalProperties": false,
+      "properties": {
+        "of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Of"
+        },
+        "of_face": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "edges bounding the selected faces",
+          "title": "Of Face"
+        },
+        "parallel_to": {
+          "anyOf": [
+            {
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parallel To"
+        },
+        "convex": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "true: outer corners, false: inner corners",
+          "title": "Convex"
+        },
+        "geom": {
+          "anyOf": [
+            {
+              "enum": [
+                "line",
+                "circle",
+                "arc",
+                "ellipse",
+                "spline"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geom"
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "length": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "near": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Near"
+        },
+        "nth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nth"
+        },
+        "sort_by": {
+          "anyOf": [
+            {
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sort By"
+        }
+      },
+      "title": "EdgeSelector",
+      "type": "object"
+    },
+    "ExplicitPlane": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Origin",
+          "type": "array"
+        },
+        "normal": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Normal",
+          "type": "array"
+        },
+        "x_dir": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X Dir"
+        }
+      },
+      "required": [
+        "origin",
+        "normal"
+      ],
+      "title": "ExplicitPlane",
+      "type": "object"
+    },
+    "Extrude": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "extrude",
+          "title": "Type",
+          "type": "string"
+        },
+        "sketch": {
+          "$ref": "#/$defs/Sketch"
+        },
+        "distance": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distance"
+        },
+        "through": {
+          "default": false,
+          "title": "Through",
+          "type": "boolean"
+        },
+        "both": {
+          "default": false,
+          "title": "Both",
+          "type": "boolean"
+        },
+        "taper": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Taper"
+        },
+        "op": {
+          "default": "add",
+          "enum": [
+            "add",
+            "cut",
+            "intersect"
+          ],
+          "title": "Op",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "sketch"
+      ],
+      "title": "Extrude",
+      "type": "object"
+    },
+    "FacePlane": {
+      "additionalProperties": false,
+      "properties": {
+        "face": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            }
+          ],
+          "title": "Face"
+        }
+      },
+      "required": [
+        "face"
+      ],
+      "title": "FacePlane",
+      "type": "object"
+    },
+    "FaceSelector": {
+      "additionalProperties": false,
+      "properties": {
+        "of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "feature id: faces created or modified by it",
+          "title": "Of"
+        },
+        "normal": {
+          "anyOf": [
+            {
+              "pattern": "^[+-][XYZ]$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "\"+Z\", \"-Y\", ...",
+          "title": "Normal"
+        },
+        "geom": {
+          "anyOf": [
+            {
+              "enum": [
+                "plane",
+                "cylinder",
+                "cone",
+                "sphere",
+                "torus"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geom"
+        },
+        "nth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "index after sorting along sort_by (or the normal axis)",
+          "title": "Nth"
+        },
+        "sort_by": {
+          "anyOf": [
+            {
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sort By"
+        },
+        "near": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "the single face whose centre is closest",
+          "title": "Near"
+        },
+        "area": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "FaceSelector",
+      "type": "object"
+    },
+    "Fillet": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "fillet",
+          "title": "Type",
+          "type": "string"
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Radius"
+        },
+        "edges": {
+          "$ref": "#/$defs/EdgeSelector"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "radius",
+        "edges"
+      ],
+      "title": "Fillet",
+      "type": "object"
+    },
+    "GridPattern": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "grid",
+          "title": "Type",
+          "type": "string"
+        },
+        "count": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Count",
+          "type": "array"
+        },
+        "spacing": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Spacing",
+          "type": "array"
+        },
+        "centered": {
+          "default": true,
+          "title": "Centered",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "count",
+        "spacing"
+      ],
+      "title": "GridPattern",
+      "type": "object"
+    },
+    "Hole": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "hole",
+          "title": "Type",
+          "type": "string"
+        },
+        "face": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            }
+          ],
+          "title": "Face"
+        },
+        "at": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 1,
+          "title": "At",
+          "type": "array"
+        },
+        "diameter": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Diameter"
+        },
+        "through": {
+          "default": false,
+          "title": "Through",
+          "type": "boolean"
+        },
+        "depth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depth"
+        },
+        "counterbore": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Counterbore"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "countersink": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Countersink"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "face",
+        "at",
+        "diameter"
+      ],
+      "title": "Hole",
+      "type": "object"
+    },
+    "LinearPattern": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "linear",
+          "title": "Type",
+          "type": "string"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Count"
+        },
+        "spacing": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Spacing"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "enum": [
+                "u",
+                "v"
+              ],
+              "type": "string"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "default": "u",
+          "title": "Direction"
+        },
+        "centered": {
+          "default": true,
+          "description": "centre the row on the shape (true) or start at it (false)",
+          "title": "Centered",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "count",
+        "spacing"
+      ],
+      "title": "LinearPattern",
+      "type": "object"
+    },
+    "Mirror": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "mirror",
+          "title": "Type",
+          "type": "string"
+        },
+        "plane": {
+          "anyOf": [
+            {
+              "enum": [
+                "XY",
+                "XZ",
+                "YZ"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/OffsetPlane"
+            },
+            {
+              "$ref": "#/$defs/FacePlane"
+            },
+            {
+              "$ref": "#/$defs/ExplicitPlane"
+            }
+          ],
+          "title": "Plane"
+        },
+        "features": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "feature ids to mirror; omit to mirror the whole body",
+          "title": "Features"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "plane"
+      ],
+      "title": "Mirror",
+      "type": "object"
+    },
+    "OffsetPlane": {
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "enum": [
+            "XY",
+            "XZ",
+            "YZ"
+          ],
+          "title": "Base",
+          "type": "string"
+        },
+        "offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Offset"
+        },
+        "origin": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "optional sketch-origin shift [u, v] on the plane",
+          "title": "Origin"
+        }
+      },
+      "required": [
+        "base"
+      ],
+      "title": "OffsetPlane",
+      "type": "object"
+    },
+    "Outputs": {
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "default": true,
+          "title": "Step",
+          "type": "boolean"
+        },
+        "stl": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/StlOptions"
+            }
+          ],
+          "default": false,
+          "title": "Stl"
+        },
+        "3mf": {
+          "default": false,
+          "title": "3Mf",
+          "type": "boolean"
+        },
+        "drawing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/DrawingOptions"
+            }
+          ],
+          "default": false,
+          "title": "Drawing"
+        },
+        "png": {
+          "default": true,
+          "title": "Png",
+          "type": "boolean"
+        }
+      },
+      "title": "Outputs",
+      "type": "object"
+    },
+    "PathShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "path",
+          "title": "Type",
+          "type": "string"
+        },
+        "start": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Start",
+          "type": "array"
+        },
+        "segments": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "segments"
+      ],
+      "title": "PathShape",
+      "type": "object"
+    },
+    "PatternFeature": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "pattern",
+          "title": "Type",
+          "type": "string"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Features",
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "linear",
+            "polar"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Count"
+        },
+        "spacing": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Spacing"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "type": "string"
+            },
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Direction"
+        },
+        "axis": {
+          "anyOf": [
+            {
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/AxisRef3"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Axis"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 360,
+          "title": "Angle"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "features",
+        "kind",
+        "count"
+      ],
+      "title": "PatternFeature",
+      "type": "object"
+    },
+    "PointsShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "points",
+          "title": "Type",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Points",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "points"
+      ],
+      "title": "PointsShape",
+      "type": "object"
+    },
+    "PolarPattern": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "polar",
+          "title": "Type",
+          "type": "string"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Count"
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Radius"
+        },
+        "center": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        },
+        "start_angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Start Angle"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 360,
+          "title": "Angle"
+        },
+        "rotate": {
+          "default": true,
+          "description": "rotate each instance with its angle",
+          "title": "Rotate",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "count",
+        "radius"
+      ],
+      "title": "PolarPattern",
+      "type": "object"
+    },
+    "PolygonShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "polygon",
+          "title": "Type",
+          "type": "string"
+        },
+        "sides": {
+          "minimum": 3,
+          "title": "Sides",
+          "type": "integer"
+        },
+        "d": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "across corners",
+          "title": "D"
+        },
+        "flat": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "across flats",
+          "title": "Flat"
+        },
+        "center": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Angle"
+        }
+      },
+      "required": [
+        "type",
+        "sides"
+      ],
+      "title": "PolygonShape",
+      "type": "object"
+    },
+    "Range": {
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        }
+      },
+      "title": "Range",
+      "type": "object"
+    },
+    "RectShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "rect",
+          "title": "Type",
+          "type": "string"
+        },
+        "w": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "W"
+        },
+        "h": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "H"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Angle"
+        },
+        "center": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Center"
+        },
+        "corner": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "bottom-left corner",
+          "title": "Corner"
+        },
+        "top_left": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top Left"
+        },
+        "top_right": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top Right"
+        },
+        "bottom_right": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bottom Right"
+        }
+      },
+      "required": [
+        "type",
+        "w",
+        "h"
+      ],
+      "title": "RectShape",
+      "type": "object"
+    },
+    "Revolve": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "revolve",
+          "title": "Type",
+          "type": "string"
+        },
+        "sketch": {
+          "$ref": "#/$defs/Sketch"
+        },
+        "axis": {
+          "anyOf": [
+            {
+              "enum": [
+                "u",
+                "v"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/AxisRef2"
+            }
+          ],
+          "default": "v",
+          "title": "Axis"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 360,
+          "title": "Angle"
+        },
+        "op": {
+          "default": "add",
+          "enum": [
+            "add",
+            "cut",
+            "intersect"
+          ],
+          "title": "Op",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "sketch"
+      ],
+      "title": "Revolve",
+      "type": "object"
+    },
+    "SectionSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "plane": {
+          "anyOf": [
+            {
+              "enum": [
+                "XY",
+                "XZ",
+                "YZ"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/OffsetPlane"
+            },
+            {
+              "$ref": "#/$defs/FacePlane"
+            },
+            {
+              "$ref": "#/$defs/ExplicitPlane"
+            }
+          ],
+          "title": "Plane"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "label; defaults to A, B, C ...",
+          "title": "Name"
+        },
+        "flip": {
+          "default": false,
+          "description": "keep the other half and look from the other side",
+          "title": "Flip",
+          "type": "boolean"
+        },
+        "hidden_lines": {
+          "default": false,
+          "title": "Hidden Lines",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "plane"
+      ],
+      "title": "SectionSpec",
+      "type": "object"
+    },
+    "Shell": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "const": "shell",
+          "title": "Type",
+          "type": "string"
+        },
+        "thickness": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Thickness"
+        },
+        "remove": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remove"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "thickness"
+      ],
+      "title": "Shell",
+      "type": "object"
+    },
+    "Sketch": {
+      "additionalProperties": false,
+      "properties": {
+        "plane": {
+          "anyOf": [
+            {
+              "enum": [
+                "XY",
+                "XZ",
+                "YZ"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/OffsetPlane"
+            },
+            {
+              "$ref": "#/$defs/FacePlane"
+            },
+            {
+              "$ref": "#/$defs/ExplicitPlane"
+            }
+          ],
+          "title": "Plane"
+        },
+        "shapes": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "circle": "#/$defs/CircleShape",
+                "path": "#/$defs/PathShape",
+                "points": "#/$defs/PointsShape",
+                "polygon": "#/$defs/PolygonShape",
+                "rect": "#/$defs/RectShape",
+                "slot": "#/$defs/SlotShape"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RectShape"
+              },
+              {
+                "$ref": "#/$defs/CircleShape"
+              },
+              {
+                "$ref": "#/$defs/SlotShape"
+              },
+              {
+                "$ref": "#/$defs/PolygonShape"
+              },
+              {
+                "$ref": "#/$defs/PointsShape"
+              },
+              {
+                "$ref": "#/$defs/PathShape"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Shapes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plane",
+        "shapes"
+      ],
+      "title": "Sketch",
+      "type": "object"
+    },
+    "SlotShape": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "add",
+          "enum": [
+            "add",
+            "subtract"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "grid": "#/$defs/GridPattern",
+                  "linear": "#/$defs/LinearPattern",
+                  "polar": "#/$defs/PolarPattern"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/LinearPattern"
+                },
+                {
+                  "$ref": "#/$defs/PolarPattern"
+                },
+                {
+                  "$ref": "#/$defs/GridPattern"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern"
+        },
+        "type": {
+          "const": "slot",
+          "title": "Type",
+          "type": "string"
+        },
+        "length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "overall end-to-end length",
+          "title": "Length"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Width"
+        },
+        "center": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "title": "Center",
+          "type": "array"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Angle"
+        }
+      },
+      "required": [
+        "type",
+        "length",
+        "width"
+      ],
+      "title": "SlotShape",
+      "type": "object"
+    },
+    "StlOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "tolerance": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0.01,
+          "title": "Tolerance"
+        },
+        "angular_tolerance": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0.1,
+          "title": "Angular Tolerance"
+        }
+      },
+      "title": "StlOptions",
+      "type": "object"
+    },
+    "TitleBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "defaults to the document name",
+          "title": "Title"
+        },
+        "number": {
+          "default": "DWG-001",
+          "title": "Number",
+          "type": "string"
+        },
+        "revision": {
+          "default": "A",
+          "title": "Revision",
+          "type": "string"
+        },
+        "material": {
+          "default": "",
+          "title": "Material",
+          "type": "string"
+        },
+        "tolerance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "e.g. \"ISO 2768-m\"; omitted means unspecified",
+          "title": "Tolerance"
+        },
+        "drawn_by": {
+          "default": "",
+          "title": "Drawn By",
+          "type": "string"
+        },
+        "company": {
+          "default": "",
+          "title": "Company",
+          "type": "string"
+        },
+        "date": {
+          "default": "",
+          "title": "Date",
+          "type": "string"
+        }
+      },
+      "title": "TitleBlock",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "optional editor hint pointing at the JSON Schema file",
+      "title": "$Schema"
+    },
+    "schema": {
+      "title": "Schema",
+      "type": "string"
+    },
+    "name": {
+      "pattern": "^[A-Za-z0-9_\\-]+$",
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "units": {
+      "default": "mm",
+      "enum": [
+        "mm",
+        "in"
+      ],
+      "title": "Units",
+      "type": "string"
+    },
+    "params": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "default": {},
+      "title": "Params",
+      "type": "object"
+    },
+    "features": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "chamfer": "#/$defs/Chamfer",
+            "extrude": "#/$defs/Extrude",
+            "fillet": "#/$defs/Fillet",
+            "hole": "#/$defs/Hole",
+            "mirror": "#/$defs/Mirror",
+            "pattern": "#/$defs/PatternFeature",
+            "revolve": "#/$defs/Revolve",
+            "shell": "#/$defs/Shell"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/Extrude"
+          },
+          {
+            "$ref": "#/$defs/Revolve"
+          },
+          {
+            "$ref": "#/$defs/Fillet"
+          },
+          {
+            "$ref": "#/$defs/Chamfer"
+          },
+          {
+            "$ref": "#/$defs/Shell"
+          },
+          {
+            "$ref": "#/$defs/Hole"
+          },
+          {
+            "$ref": "#/$defs/Mirror"
+          },
+          {
+            "$ref": "#/$defs/PatternFeature"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Features",
+      "type": "array"
+    },
+    "outputs": {
+      "$ref": "#/$defs/Outputs",
+      "default": {
+        "step": true,
+        "stl": false,
+        "3mf": false,
+        "drawing": false,
+        "png": true
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "name",
+    "features"
+  ],
+  "title": "Document",
+  "type": "object"
+}

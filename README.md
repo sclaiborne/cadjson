@@ -29,8 +29,20 @@ Note: the sheet generator (draftwright, AGPL-3) pins build123d to 0.10 on Python
 .venv\Scripts\cadgen build examples\*.json --views front,top,right,iso
 .venv\Scripts\cadgen info examples\board_profile.json     # list faces and edges, to write selectors
 .venv\Scripts\cadgen export-fusion examples\board_profile.json   # Fusion 360 script with a native timeline
-.venv\Scripts\cadgen schema > cadgen.schema.json
+.venv\Scripts\cadgen export-python examples\board_profile.json   # standalone build123d script
+.venv\Scripts\cadgen schema -o schema\cadgen-0.1.schema.json     # JSON Schema (committed copy lives there)
 ```
+
+Every build also writes `out/<name>/report.json` with volume, bounding box, resolved params,
+per-feature timings and the list of files. Add `"$schema": "../schema/cadgen-0.1.schema.json"`
+to a part for editor validation and completion.
+
+## Working with Claude Code
+
+The project ships a skill at `.claude/skills/cadgen/SKILL.md`. In Claude Code, asking for a
+part ("make a 40 mm spacer with four M3 holes") triggers it: Claude writes the JSON, runs
+`cadgen validate` and `cadgen build`, reads the report and the PNG previews, and iterates on
+selector or fillet errors using `cadgen info`.
 
 `build` writes to `out/<name>/`: STEP, STL, one SVG per view, section views, the drawing
 sheet, and PNG previews. Each part's `outputs` block sets the defaults; `--step/--no-step`,

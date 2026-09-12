@@ -366,6 +366,8 @@ class Outputs(Model):
 
 
 class Document(Model):
+    schema_uri: str | None = Field(None, alias="$schema", exclude=True,
+                                   description="optional editor hint pointing at the JSON Schema file")
     schema_version: str = Field(alias="schema")
     name: str = Field(pattern=r"^[A-Za-z0-9_\-]+$")
     description: str = ""

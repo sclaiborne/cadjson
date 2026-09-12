@@ -1,0 +1,46 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "plate_inch",
+  "description": "3 x 2 x 1/4 inch plate with six countersunk holes and a centre slot. Exercises inch units, countersinks, slots, and fillets specified in inches.",
+  "units": "in",
+
+  "params": {
+    "L": 3,
+    "W": 2,
+    "t": 0.25,
+    "hole_d": 0.2,
+    "csk_d": 0.4,
+    "cols": 3,
+    "rows": 2,
+    "pitch_x": 1.0,
+    "pitch_y": 1.25
+  },
+
+  "features": [
+    {
+      "id": "plate",
+      "type": "extrude", "distance": "t",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "rect", "w": "L", "h": "W" } ] }
+    },
+    {
+      "id": "corners",
+      "type": "fillet", "radius": 0.25,
+      "edges": { "of": "plate", "parallel_to": "Z" }
+    },
+    {
+      "id": "slot",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": { "face": "top" }, "shapes": [ { "type": "slot", "length": 0.75, "width": 0.25 } ] }
+    },
+    {
+      "id": "csk_holes",
+      "type": "hole", "face": "top", "through": true,
+      "diameter": "hole_d",
+      "countersink": { "diameter": "csk_d", "angle": 90 },
+      "at": [[-1, -0.625], [0, -0.625], [1, -0.625], [-1, 0.625], [0, 0.625], [1, 0.625]]
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["top", "front", "iso"], "hidden_lines": true } }
+}

@@ -233,5 +233,8 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
                 export.write_view_svg(part, view, svg, True, 1.0)
             files.append(export.svg_to_png(svg, out_dir / f"{name}_{view}.png"))
 
+    from cadgen.report import write_report
+
+    files.append(write_report(result, out_dir, files))
     result.files = files
     return files

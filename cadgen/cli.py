@@ -96,25 +96,60 @@ def export_fusion_cmd(parts, out_dir: Path) -> None:
     sys.exit(1 if failed else 0)
 
 
+@main.command("export-python")
+@click.argument("parts", nargs=-1, required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True)
+def export_python_cmd(parts, out_dir: Path) -> None:
+    """Write a standalone build123d script equivalent to building PARTS."""
+    from cadgen.build import load_document
+    from cadgen.pyexport import export_python
+
+    failed = 0
+    for path in parts:
+        try:
+            doc = load_document(path)
+            click.echo(f"  wrote {export_python(doc, out_dir / doc.name)}")
+        except CadgenError as exc:
+            failed += 1
+            click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)
+    sys.exit(1 if failed else 0)
+
+
 @main.command()
-def schema() -> None:
-    """Print the JSON Schema for the document format."""
+@click.option("-o", "--out", "out_path", type=click.Path(path_type=Path), default=None,
+              help="write to this file instead of stdout")
+def schema(out_path: Path | None) -> None:
+    """Print (or write) the JSON Schema for the document format."""
     from cadgen.schema import json_schema
 
-    click.echo(json.dumps(json_schema(), indent=2))
+    text = json.dumps(json_schema(), indent=2) + "\n"
+    if out_path:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(text, encoding="utf-8")
+        click.echo(f"wrote {out_path}")
+    else:
+        click.echo(text, nl=False)
 
 
 @main.command()
 @click.argument("part", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-def info(part: Path) -> None:
+@click.option("--json", "as_json", is_flag=True, help="print a JSON report instead of text")
+def info(part: Path, as_json: bool) -> None:
     """Build PART and print its faces and edges, to help write selectors."""
     from cadgen.build import build_document, load_document
+    from cadgen.report import build_report
     from cadgen.selectors import _describe_edge, _describe_face
 
     try:
         result = build_document(load_document(part))
     except CadgenError as exc:
         _fail(exc)
+    if as_json:
+        rep = build_report(result, [])
+        rep["face_list"] = [_describe_face(f) for f in result.part.faces()]
+        rep["edge_list"] = [_describe_edge(e) for e in result.part.edges()]
+        click.echo(json.dumps(rep, indent=2))
+        return
     click.echo(result.summary())
     click.echo("faces:")
     for f in result.part.faces():
