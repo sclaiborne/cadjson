@@ -26,8 +26,8 @@ from build123d import (
     revolve,
 )
 
-from cadgen.errors import CadgenError
-from cadgen.selectors import edge_sig, face_sig
+from cadjson.errors import CadjsonError
+from cadjson.selectors import edge_sig, face_sig
 
 _TINY = 1e-6
 
@@ -58,15 +58,15 @@ class Builder:
 
     def require_solid(self, fid: str, what: str) -> Part:
         if self.solid is None:
-            raise CadgenError(f"cannot {what}: there is no solid yet (the first feature must add material)", fid)
+            raise CadjsonError(f"cannot {what}: there is no solid yet (the first feature must add material)", fid)
         return self.solid
 
     def _commit(self, fid: str, after: Part, added: Part | None = None, removed: Part | None = None) -> Part:
         before = self.solid
         if after is None or not after.is_valid:
-            raise CadgenError("the resulting solid is invalid", fid, ["try a slightly different size or order of features"])
+            raise CadjsonError("the resulting solid is invalid", fid, ["try a slightly different size or order of features"])
         if after.volume < _TINY:
-            raise CadgenError("the resulting solid has no volume", fid)
+            raise CadjsonError("the resulting solid has no volume", fid)
         rec = FeatureRecord()
         if before is None:
             rec.added = after
@@ -94,7 +94,7 @@ class Builder:
             return self._commit(fid, base - tool, removed=_nonempty(base & tool))
         if op == "intersect":
             return self._commit(fid, base & tool, removed=_nonempty(base - tool))
-        raise CadgenError(f"unknown op {op!r}", fid)
+        raise CadjsonError(f"unknown op {op!r}", fid)
 
     def through_distance(self, plane: Plane) -> float:
         """Long enough to pass through the whole current solid from anywhere on the plane."""
@@ -113,11 +113,11 @@ class Builder:
         else:
             amount = distance
         if amount is None or abs(amount) < _TINY:
-            raise CadgenError("extrude distance must be non-zero", fid)
+            raise CadjsonError("extrude distance must be non-zero", fid)
         try:
             tool = extrude(located, amount=amount, both=both, taper=taper)
         except Exception as exc:  # OCCT failures are not very descriptive
-            raise CadgenError(f"extrude failed: {exc}", fid) from None
+            raise CadjsonError(f"extrude failed: {exc}", fid) from None
         return self._combine(fid, tool, op)
 
     def revolve(self, fid: str, sketch: Sketch, plane: Plane, axis: Axis, angle: float, op: str) -> Part:
@@ -125,13 +125,13 @@ class Builder:
         try:
             tool = revolve(located, axis=axis, revolution_arc=angle)
         except Exception as exc:
-            raise CadgenError(f"revolve failed: {exc}", fid, ["the profile must not cross the axis"]) from None
+            raise CadjsonError(f"revolve failed: {exc}", fid, ["the profile must not cross the axis"]) from None
         return self._combine(fid, tool, op)
 
     def fillet(self, fid: str, edges: list[Edge], radius: float) -> Part:
         base = self.require_solid(fid, "fillet")
         if radius <= 0:
-            raise CadgenError("fillet radius must be positive", fid)
+            raise CadjsonError("fillet radius must be positive", fid)
         try:
             after = base.fillet(radius, edges)
         except Exception:
@@ -139,13 +139,13 @@ class Builder:
             best = _max_feasible(lambda r: base.fillet(r, edges), radius)
             if best is not None:
                 hints.append(f"largest radius that works on these edges is about {best:.3g}")
-            raise CadgenError(f"fillet of radius {radius:g} failed", fid, hints) from None
+            raise CadjsonError(f"fillet of radius {radius:g} failed", fid, hints) from None
         return self._commit(fid, after)
 
     def chamfer(self, fid: str, edges: list[Edge], length: float, length2: float | None) -> Part:
         base = self.require_solid(fid, "chamfer")
         if length <= 0 or (length2 is not None and length2 <= 0):
-            raise CadgenError("chamfer lengths must be positive", fid)
+            raise CadjsonError("chamfer lengths must be positive", fid)
         try:
             after = base.chamfer(length, length2, edges)
         except Exception:
@@ -153,17 +153,17 @@ class Builder:
             best = _max_feasible(lambda l: base.chamfer(l, None if length2 is None else l * length2 / length, edges), length)
             if best is not None:
                 hints.append(f"largest length that works on these edges is about {best:.3g}")
-            raise CadgenError(f"chamfer of length {length:g} failed", fid, hints) from None
+            raise CadjsonError(f"chamfer of length {length:g} failed", fid, hints) from None
         return self._commit(fid, after)
 
     def shell(self, fid: str, thickness: float, openings: list[Face] | None) -> Part:
         base = self.require_solid(fid, "shell")
         if abs(thickness) < _TINY:
-            raise CadgenError("shell thickness must be non-zero", fid)
+            raise CadjsonError("shell thickness must be non-zero", fid)
         try:
             after = offset(base, amount=-thickness, openings=openings or None)
         except Exception as exc:
-            raise CadgenError(f"shell failed: {exc}", fid, ["thickness may be too large for the geometry"]) from None
+            raise CadjsonError(f"shell failed: {exc}", fid, ["thickness may be too large for the geometry"]) from None
         return self._commit(fid, after)
 
     def hole(self, fid: str, plane: Plane, points: list[tuple[float, float]], diameter: float, *,
@@ -172,10 +172,10 @@ class Builder:
         base = self.require_solid(fid, "hole")
         r = diameter / 2
         if r <= 0:
-            raise CadgenError("hole diameter must be positive", fid)
+            raise CadjsonError("hole diameter must be positive", fid)
         amount = self.through_distance(plane) if through else depth
         if amount is None or amount <= 0:
-            raise CadgenError("hole depth must be positive", fid)
+            raise CadjsonError("hole depth must be positive", fid)
         tool: Part | None = None
         for u, v in points:
             loc = Location((u, v, 0))
@@ -211,12 +211,12 @@ class Builder:
         for i, located in enumerate(sections):
             fs = located.faces()
             if len(fs) != 1:
-                raise CadgenError(f"loft section {i} must be exactly one closed shape, got {len(fs)}", fid)
+                raise CadjsonError(f"loft section {i} must be exactly one closed shape, got {len(fs)}", fid)
             faces.append(fs[0])
         try:
             tool = b3d_loft(faces, ruled=ruled)
         except Exception as exc:
-            raise CadgenError(f"loft failed: {exc}", fid, ["sections should have compatible shapes and not cross"]) from None
+            raise CadjsonError(f"loft failed: {exc}", fid, ["sections should have compatible shapes and not cross"]) from None
         return self._combine(fid, tool, op)
 
     def sweep(self, fid: str, profile, path_wire, op: str) -> Part:
@@ -225,11 +225,11 @@ class Builder:
 
         fs = profile.faces()
         if len(fs) != 1:
-            raise CadgenError(f"sweep profile must be exactly one closed shape, got {len(fs)}", fid)
+            raise CadjsonError(f"sweep profile must be exactly one closed shape, got {len(fs)}", fid)
         try:
             tool = b3d_sweep(fs[0], path=path_wire, transition=Transition.ROUND)
         except Exception as exc:
-            raise CadgenError(f"sweep failed: {exc}", fid, ["the profile should sit at the path start, perpendicular to it",
+            raise CadjsonError(f"sweep failed: {exc}", fid, ["the profile should sit at the path start, perpendicular to it",
                                                          "bend radii must exceed the profile's half-width"]) from None
         return self._combine(fid, tool, op)
 
@@ -241,15 +241,15 @@ class Builder:
                hand: str) -> Part:
         from OCP.BRepAdaptor import BRepAdaptor_Surface
 
-        from cadgen.planes import plane_from_normal
+        from cadjson.planes import plane_from_normal
 
         base = self.require_solid(fid, "thread")
         if face.geom_type.name != "CYLINDER":
-            raise CadgenError(f"thread needs a cylindrical face, got {face.geom_type.name.lower()}", fid)
+            raise CadjsonError(f"thread needs a cylindrical face, got {face.geom_type.name.lower()}", fid)
         try:
             from bd_warehouse.thread import IsoThread
         except ImportError:
-            raise CadgenError("threads need the bd_warehouse package (pip install 'bd_warehouse<0.3')", fid) from None
+            raise CadjsonError("threads need the bd_warehouse package (pip install 'bd_warehouse<0.3')", fid) from None
         cyl = BRepAdaptor_Surface(face.wrapped).Cylinder()
         ax = cyl.Axis()
         d = Vector(ax.Direction().X(), ax.Direction().Y(), ax.Direction().Z()).normalized()
@@ -258,14 +258,14 @@ class Builder:
         tmin, tmax = min(ts), max(ts)
         face_len = tmax - tmin
         if face_len < 1e-6:
-            raise CadgenError("cannot determine the length of the cylindrical face", fid)
+            raise CadjsonError("cannot determine the length of the cylindrical face", fid)
         start_t, direction = tmin, d
         if near is not None:
             if (near - (p + d * tmax)).length < (near - (p + d * tmin)).length:
                 start_t, direction = tmax, d * -1
         L = face_len if length is None else min(length, face_len)
         if L <= spec.pitch:
-            raise CadgenError(f"thread length {L:g} is shorter than one pitch ({spec.pitch:g})", fid)
+            raise CadjsonError(f"thread length {L:g} is shorter than one pitch ({spec.pitch:g})", fid)
         radius = cyl.Radius()
         expect = spec.major / 2 if external else spec.tap_drill / 2
         hints = []
@@ -286,7 +286,7 @@ class Builder:
                 bore = Cylinder(spec.major / 2, L, align=align)
                 after = (base - (plane * bore)) + th
         except Exception as exc:
-            raise CadgenError(f"thread failed: {exc}", fid, hints) from None
+            raise CadjsonError(f"thread failed: {exc}", fid, hints) from None
         return self._commit(fid, after)
 
     def pattern(self, fid: str, feature_ids: list[str], transforms: list) -> Part:

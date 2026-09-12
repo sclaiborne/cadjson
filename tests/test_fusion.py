@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cadgen.build import load_document
-from cadgen.errors import CadgenError
-from cadgen.expr import UnitsError, to_fusion
-from cadgen.fusion import FusionExporter, export_fusion, infer_param_kinds
+from cadjson.build import load_document
+from cadjson.errors import CadjsonError
+from cadjson.expr import UnitsError, to_fusion
+from cadjson.fusion import FusionExporter, export_fusion, infer_param_kinds
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fake_adsk  # noqa: E402
@@ -68,7 +68,7 @@ def test_script_generates_compiles_and_dry_runs(path, tmp_path):
     doc = load_document(path)
     why = fusion_unsupported(doc)
     if why:
-        with pytest.raises(CadgenError, match="cannot be exported|assembl"):
+        with pytest.raises(CadjsonError, match="cannot be exported|assembl"):
             export_fusion(doc, tmp_path)
         pytest.skip(f"{why} is not exported to Fusion yet (error is explicit)")
     files = export_fusion(doc, tmp_path)
@@ -95,7 +95,7 @@ def test_script_generates_compiles_and_dry_runs(path, tmp_path):
     ns["run"](None)
     ui = adsk._app.userInterface
     messages = [c.args[0] for c in ui.messageBox.call_args_list]
-    assert messages and messages[-1].startswith("cadgen: built"), messages
+    assert messages and messages[-1].startswith("cadjson: built"), messages
 
 
 def test_board_script_uses_parameters_not_numbers(tmp_path):

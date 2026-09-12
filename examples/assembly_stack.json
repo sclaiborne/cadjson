@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "assembly_stack",
   "description": "Assembly: two hex standoffs and a spacer (with its outer diameter overridden) stacked on a plate that is modelled here. Exercises placed parts with param overrides plus local features.",
   "units": "mm",

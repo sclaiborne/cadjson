@@ -1,14 +1,14 @@
 ---
-name: cadgen
-description: Write, edit, build and check cadgen part files (JSON feature trees that become STEP, STL, 2D drawings and Fusion 360 timelines). Use whenever the user asks to model a part, change a dimension, add a feature, fix a build error, or produce CAD/STL/drawings from a description or sketch.
+name: cadjson
+description: Write, edit, build and check cadjson part files (JSON feature trees that become STEP, STL, 2D drawings and Fusion 360 timelines). Use whenever the user asks to model a part, change a dimension, add a feature, fix a build error, or produce CAD/STL/drawings from a description or sketch.
 ---
 
-# cadgen: CAD as text
+# cadjson: CAD as text
 
 A part is one JSON file: named dimensions in `params`, an ordered list of `features`, and
-`outputs`. `cadgen` validates it, builds it with the OpenCascade kernel, and writes STEP,
+`outputs`. `cadjson` validates it, builds it with the OpenCascade kernel, and writes STEP,
 STL, per-view SVGs, section views, an annotated drawing sheet, PNG previews and a Fusion
-script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadgen-0.1.schema.json`.
+script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjson-0.1.schema.json`.
 
 ## Workflow (always)
 
@@ -16,14 +16,14 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
    user named in `params` and reference it by name. Never write derived coordinates by hand.
 2. Validate, then build:
    ```
-   .venv\Scripts\cadgen validate parts\<name>.json
-   .venv\Scripts\cadgen build parts\<name>.json
+   .venv\Scripts\cadjson validate parts\<name>.json
+   .venv\Scripts\cadjson build parts\<name>.json
    ```
 3. Read `out/<name>/report.json` (volume, bbox, feature timings, files) and **look at**
    `out/<name>/<name>_iso.png` and `<name>_front.png` with the Read tool. Feature-order
    mistakes are silent; a picture catches them. Compare the volume with a hand estimate.
 4. If a selector or fillet fails, the error names the feature and lists candidates. Run
-   `.venv\Scripts\cadgen info parts\<name>.json` to see every face and edge with normal,
+   `.venv\Scripts\cadjson info parts\<name>.json` to see every face and edge with normal,
    centre and size, then fix the selector. Do not switch to raw indices.
 5. Report to the user: what was built, the volume and bbox, which files exist, and anything
    you assumed (unlabelled sizes, hole positions).
@@ -31,7 +31,7 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
 ## The format in one page
 
 ```jsonc
-{ "schema": "cadgen/0.1", "name": "bracket", "units": "mm",
+{ "schema": "cadjson/0.1", "name": "bracket", "units": "mm",
   "params": { "L": 60, "t": 4, "hole_d": 5.5, "g": "L - 2 * t" },
   "features": [
     { "id": "base", "type": "extrude", "distance": "t",
@@ -62,8 +62,8 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
   `params` overrides); they stay separate solids in the STEP.
 - **Variants**: `"extends": "base.json"` inherits a part; override `params`, replace features by
   id, append new ones, `drop` unwanted ones (docs/extending.md). Prefer a variant over copying.
-- **Plugins**: extra feature types from installed plugins show up in `cadgen plugins` and in
-  schema errors; `CADGEN_PLUGINS=module` loads one from the path.
+- **Plugins**: extra feature types from installed plugins show up in `cadjson plugins` and in
+  schema errors; `CADJSON_PLUGINS=module` loads one from the path.
 - **Text**: a `text` sketch shape (text, size, center); cut with a negative distance to engrave.
 - **Selectors** (all filters AND together; never indices):
   faces: `of`, `normal` `"+Z"`, `geom`, `nth` + `sort_by`, `near`, `area`; shortcuts `"top"`,
@@ -101,14 +101,14 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
 
 ## Other commands
 
-- `cadgen export-fusion parts\<name>.json` writes a Fusion 360 script (native timeline) into
+- `cadjson export-fusion parts\<name>.json` writes a Fusion 360 script (native timeline) into
   `out/<name>_fusion/`; the user runs it from Fusion's Scripts dialog.
-- `cadgen export-python parts\<name>.json` writes the equivalent standalone build123d script,
+- `cadjson export-python parts\<name>.json` writes the equivalent standalone build123d script,
   for when the schema cannot express something.
-- `cadgen schema` prints the JSON Schema; `cadgen build --sheet` forces the drawing sheet.
-- `cadgen compare parts\<name>.json reference.stl` checks a recreation against an existing mesh:
+- `cadjson schema` prints the JSON Schema; `cadjson build --sheet` forces the drawing sheet.
+- `cadjson compare parts\<name>.json reference.stl` checks a recreation against an existing mesh:
   volume, bbox, and surface distance both ways. Recreating from an STL: measure it with trimesh
   (bounds, volume, `section` slices at a few heights, sharp edges), model it, then compare.
   Keep the mesh beside the part as `<name>_ref.stl`.
-- `cadgen init <folder>` scaffolds a parts repository (this skill, .gitignore, README, a pinned
-  requirements.txt); `cadgen init . --update` refreshes the skill after upgrading cadgen.
+- `cadjson init <folder>` scaffolds a parts repository (this skill, .gitignore, README, a pinned
+  requirements.txt); `cadjson init . --update` refreshes the skill after upgrading cadjson.

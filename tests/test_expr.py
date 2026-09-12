@@ -1,7 +1,7 @@
 import pytest
 
-from cadgen.errors import CadgenError
-from cadgen.expr import evaluate, resolve_params
+from cadjson.errors import CadjsonError
+from cadjson.expr import evaluate, resolve_params
 
 
 def test_numbers_and_arithmetic():
@@ -22,16 +22,16 @@ def test_params_and_functions():
 
 def test_resolve_params_any_order_and_cycles():
     assert resolve_params({"g": "L - x", "L": 10, "x": "2 * 3"}) == {"g": 4, "L": 10, "x": 6}
-    with pytest.raises(CadgenError, match="cycle"):
+    with pytest.raises(CadjsonError, match="cycle"):
         resolve_params({"a": "b + 1", "b": "a + 1"})
 
 
 @pytest.mark.parametrize("bad", ["L +", "2 ** 3", "foo(1)", "import os", "1 / 0", "a b"])
 def test_bad_expressions(bad):
-    with pytest.raises(CadgenError):
+    with pytest.raises(CadjsonError):
         evaluate(bad, {"L": 1.0, "a": 1.0, "b": 2.0})
 
 
 def test_unknown_param_lists_known_ones():
-    with pytest.raises(CadgenError, match="unknown parameter 'q'.*L"):
+    with pytest.raises(CadjsonError, match="unknown parameter 'q'.*L"):
         evaluate("q + 1", {"L": 1.0})

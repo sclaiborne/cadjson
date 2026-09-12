@@ -1,5 +1,5 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "spacer",
   "description": "Round spacer made by revolving a rectangle, chamfered outer edges, and a polar pattern of four small through holes. Exercises revolve, sketch-level patterns, and geometry-type selectors.",
   "units": "mm",
@@ -40,5 +40,5 @@
     "drawing": { "views": ["top", "front", "iso"], "hidden_lines": true,
                  "sections": [ { "name": "A", "plane": "XZ" } ],
                  "sheet": true, "dimensions": true, "format": ["pdf"],
-                 "title_block": { "number": "CG-003", "drawn_by": "cadgen" } } }
+                 "title_block": { "number": "CG-003", "drawn_by": "cadjson" } } }
 }

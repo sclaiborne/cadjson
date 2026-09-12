@@ -1,8 +1,8 @@
-# cadgen schema v0
+# cadjson schema v0
 
 Status: implemented (Phases 1 and 2, 2026-09-12). Examples in `examples/` build with
-`cadgen build`.
-`cadgen schema` prints the machine-readable JSON Schema generated from the same models.
+`cadjson build`.
+`cadjson schema` prints the machine-readable JSON Schema generated from the same models.
 
 Design rule: **the numbers a person would write on a sketch are the numbers in the file.**
 Every labelled dimension appears once, in `params`, and features refer to it by name.
@@ -12,7 +12,7 @@ Coordinates of individual points should almost never appear.
 
 ```jsonc
 {
-  "schema": "cadgen/0.1",      // required, exact string
+  "schema": "cadjson/0.1",      // required, exact string
   "name": "board_profile",     // used for output file names
   "description": "...",        // free text, optional
   "units": "mm",               // "mm" (default) or "in"; all lengths are in this unit
@@ -306,13 +306,13 @@ that feature *created*, identified by the surface or curve they lie on. Later cu
 and chamfers may trim those faces, and they still count as belonging to the feature. Faces
 that merely got trimmed by a cut do not belong to the cut; the cut's own walls do.
 
-`cadgen info part.json` prints every face and edge of the finished part with its normal,
+`cadjson info part.json` prints every face and edge of the finished part with its normal,
 centre, and size, which is the quickest way to work out a selector.
 
 ## 7b. Assemblies: `parts`
 
 ```jsonc
-{ "schema": "cadgen/0.1", "name": "stack",
+{ "schema": "cadjson/0.1", "name": "stack",
   "params": { "pitch": 20 },
   "parts": [
     { "file": "hex_standoff.json", "name": "left",  "at": [0, 0, 0] },

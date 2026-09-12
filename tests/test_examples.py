@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from cadgen.build import build_document, load_document, write_outputs
+from cadjson.build import build_document, load_document, write_outputs
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 ALL = sorted(p for p in EXAMPLES.glob("*.json"))

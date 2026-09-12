@@ -11,12 +11,12 @@ from pathlib import Path
 from build123d import Axis, Compound, Part, Vector
 from pydantic import ValidationError
 
-from cadgen import export
-from cadgen.builder import Builder
-from cadgen.context import Context
-from cadgen.errors import CadgenError
-from cadgen.planes import AXIS, resolve_plane
-from cadgen.schema import (
+from cadjson import export
+from cadjson.builder import Builder
+from cadjson.context import Context
+from cadjson.errors import CadjsonError
+from cadjson.planes import AXIS, resolve_plane
+from cadjson.schema import (
     Chamfer,
     Document,
     DrawingOptions,
@@ -34,8 +34,8 @@ from cadgen.schema import (
     Thread,
     ThreeMfOptions,
 )
-from cadgen.selectors import Selection
-from cadgen.sketch import build_sketch, open_path_wire
+from cadjson.selectors import Selection
+from cadjson.sketch import build_sketch, open_path_wire
 
 SOURCE_PATHS: dict[int, Path] = {}  # id(document) -> file it was loaded from (for relative part refs)
 EXTENDS_CHAIN: dict[int, list[str]] = {}  # id(document) -> base files it was merged from
@@ -52,13 +52,13 @@ def load_document(path: Path | str) -> Document:
 
 def _read_json(path: Path) -> dict:
     if not path.exists():
-        raise CadgenError(f"file not found: {path}")
+        raise CadjsonError(f"file not found: {path}")
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise CadgenError(f"{path}: not valid JSON: {exc}") from None
+        raise CadjsonError(f"{path}: not valid JSON: {exc}") from None
     if not isinstance(raw, dict):
-        raise CadgenError(f"{path}: the document must be a JSON object")
+        raise CadjsonError(f"{path}: the document must be a JSON object")
     return raw
 
 
@@ -82,13 +82,13 @@ def load_raw(path: Path, stack: tuple[Path, ...] = ()) -> tuple[dict, list[str]]
     """Raw document dict with `extends` resolved (merged), plus the chain of base files used."""
     path = path.resolve()
     if path in stack:
-        raise CadgenError("extends forms a cycle: " + " -> ".join(str(p) for p in stack + (path,)))
+        raise CadjsonError("extends forms a cycle: " + " -> ".join(str(p) for p in stack + (path,)))
     raw = _read_json(path)
     ext = raw.get("extends")
     if ext is None:
         return raw, []
     if not isinstance(ext, str):
-        raise CadgenError(f"{path}: extends must be a file path string")
+        raise CadjsonError(f"{path}: extends must be a file path string")
     base_path = (path.parent / ext).resolve()
     base, chain = load_raw(base_path, stack + (path,))
     _rebase_refs(base, base_path.parent, path.parent)
@@ -103,7 +103,7 @@ def merge_documents(base: dict, child: dict, source: str = "document") -> dict:
         if key in child:
             merged[key] = child[key]
     if "units" in base and "units" in child and base["units"] != child["units"]:
-        raise CadgenError(f"{source}: units {child['units']!r} differ from the base's {base['units']!r}")
+        raise CadjsonError(f"{source}: units {child['units']!r} differ from the base's {base['units']!r}")
     merged["params"] = {**base.get("params", {}), **child.get("params", {})}
     merged["parts"] = list(base.get("parts", [])) + list(child.get("parts", []))
 
@@ -111,10 +111,10 @@ def merge_documents(base: dict, child: dict, source: str = "document") -> dict:
     ids = {f.get("id"): i for i, f in enumerate(features)}
     drop = child.get("drop", [])
     if not isinstance(drop, list):
-        raise CadgenError(f"{source}: drop must be a list of feature ids")
+        raise CadjsonError(f"{source}: drop must be a list of feature ids")
     for fid in drop:
         if fid not in ids:
-            raise CadgenError(f"{source}: drop names {fid!r}, which is not a feature of the base",
+            raise CadjsonError(f"{source}: drop names {fid!r}, which is not a feature of the base",
                               hints=[f"base features: {', '.join(ids)}"])
     features = [f for f in features if f.get("id") not in drop]
     ids = {f.get("id"): i for i, f in enumerate(features)}
@@ -145,16 +145,16 @@ class _Imports:
     def build(self, doc: Document, file: str, overrides: dict, ctx: Context, fid: str | None) -> Part:
         path = (source_dir(doc) / file).resolve()
         if not path.exists():
-            raise CadgenError(f"part file not found: {path}", fid)
+            raise CadjsonError(f"part file not found: {path}", fid)
         if path in self.stack:
-            raise CadgenError("part files reference each other in a cycle: " + " -> ".join(str(p) for p in self.stack + [path]), fid)
+            raise CadjsonError("part files reference each other in a cycle: " + " -> ".join(str(p) for p in self.stack + [path]), fid)
         resolved = {k: ctx.num(v) for k, v in overrides.items()}
         key = (path, tuple(sorted(resolved.items())))
         if key not in self.cache:
             sub = load_document(path)
             unknown = set(resolved) - set(sub.params)
             if unknown:
-                raise CadgenError(f"{path.name} has no params named {sorted(unknown)}", fid,
+                raise CadjsonError(f"{path.name} has no params named {sorted(unknown)}", fid,
                                   [f"its params are: {', '.join(sub.params) or '(none)'}"])
             merged = {**sub.params, **resolved}
             sub2 = sub.model_copy(update={"params": merged})
@@ -178,7 +178,7 @@ def _transform(shape: Part, at: Vector, rotate) -> Part:
 
 
 def parse_document(raw: dict, source: str = "document") -> Document:
-    from cadgen.plugins import registry
+    from cadjson.plugins import registry
 
     model = registry.document_model()
     try:
@@ -192,7 +192,7 @@ def parse_document(raw: dict, source: str = "document") -> Document:
             hints.append("plugin feature types available: " + ", ".join(registry.features))
         if registry.errors:
             hints.append("plugin problems: " + "; ".join(registry.errors))
-        raise CadgenError(f"{source} does not match schema ({len(hints)} problem(s))", hints=hints) from None
+        raise CadjsonError(f"{source} does not match schema ({len(hints)} problem(s))", hints=hints) from None
 
 
 @dataclass
@@ -301,8 +301,8 @@ class FeatureAPI:
         """Combine a ready-made build123d solid with the body (add / cut / intersect)."""
         return self.builder.place(self.fid, tool, op)
 
-    def error(self, message: str, hints: list[str] | None = None) -> CadgenError:
-        return CadgenError(message, self.fid, hints)
+    def error(self, message: str, hints: list[str] | None = None) -> CadjsonError:
+        return CadjsonError(message, self.fid, hints)
 
 
 def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None) -> None:
@@ -356,15 +356,15 @@ def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None
             counterbore=cb, countersink=cs,
         )
     elif isinstance(feat, Thread):
-        from cadgen.standards import thread_spec
+        from cadjson.standards import thread_spec
 
         try:
             spec = thread_spec(feat.size)
-        except CadgenError as exc:
-            raise CadgenError(exc.message, fid, exc.hints) from None
+        except CadjsonError as exc:
+            raise CadjsonError(exc.message, fid, exc.hints) from None
         fs = faces(feat.face)
         if len(fs) != 1:
-            raise CadgenError(f"thread face selector matched {len(fs)} faces, need exactly one", fid)
+            raise CadjsonError(f"thread face selector matched {len(fs)} faces, need exactly one", fid)
         b.thread(
             fid, fs[0], spec, feat.kind == "external",
             None if feat.length is None else ctx.length(feat.length),
@@ -388,7 +388,7 @@ def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None
     elif isinstance(feat, PatternFeature):
         n = int(round(ctx.num(feat.count)))
         if n < 2:
-            raise CadgenError("pattern count must be at least 2", fid)
+            raise CadjsonError("pattern count must be at least 2", fid)
         transforms = []
         if feat.kind == "linear":
             d = AXIS[feat.direction] if isinstance(feat.direction, str) else ctx.dir3(feat.direction)
@@ -406,23 +406,23 @@ def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None
                 transforms.append(lambda shape, a=step * i, ax=axis: shape.rotate(ax, a))
         b.pattern(fid, feat.features, transforms)
     else:
-        from cadgen.plugins import registry
+        from cadjson.plugins import registry
 
         plugin = registry.plugin_for(feat)
         if plugin is None:
-            raise CadgenError(f"unsupported feature type {feat.type!r}", fid)
+            raise CadjsonError(f"unsupported feature type {feat.type!r}", fid)
         try:
             plugin.build(feat, api)
-        except CadgenError:
+        except CadjsonError:
             raise
         except Exception as exc:
-            raise CadgenError(f"plugin feature {feat.type!r} failed: {type(exc).__name__}: {exc}", fid) from None
+            raise CadjsonError(f"plugin feature {feat.type!r} failed: {type(exc).__name__}: {exc}", fid) from None
         if fid not in b.records:
-            raise CadgenError(f"plugin feature {feat.type!r} did not produce geometry (call api.extrude or api.combine)", fid)
+            raise CadjsonError(f"plugin feature {feat.type!r} did not produce geometry (call api.extrude or api.combine)", fid)
 
 
 def _face_plane_ref(face_sel):
-    from cadgen.schema import FacePlane
+    from cadjson.schema import FacePlane
 
     return FacePlane(face=face_sel)
 
@@ -431,12 +431,12 @@ def hole_diameter(feat: Hole, ctx: Context) -> float:
     """Explicit diameter, or the tap/clearance size for a standard thread (always in mm)."""
     if feat.diameter is not None:
         return ctx.length(feat.diameter)
-    from cadgen.standards import thread_spec
+    from cadjson.standards import thread_spec
 
     try:
         return thread_spec(feat.standard).hole_diameter(feat.fit)
-    except CadgenError as exc:
-        raise CadgenError(exc.message, feat.id, exc.hints) from None
+    except CadjsonError as exc:
+        raise CadjsonError(exc.message, feat.id, exc.hints) from None
 
 
 _DOC_OF: dict[int, Document] = {}  # id(builder) -> document, so part refs resolve relative paths
@@ -488,8 +488,8 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
                     part, plane, out_dir / f"{name}_section_{label}.svg",
                     flip=sec.flip, hidden=sec.hidden_lines, scale=scale,
                 )
-            except CadgenError as exc:
-                raise CadgenError(f"section {label}: {exc.message}", hints=exc.hints) from None
+            except CadjsonError as exc:
+                raise CadjsonError(f"section {label}: {exc.message}", hints=exc.hints) from None
             files.append(svg)
             if png if png is not None else out.png:
                 files.append(export.svg_to_png(svg, svg.with_suffix(".png")))
@@ -511,7 +511,7 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
                 export.write_view_svg(part, view, svg, True, 1.0)
             files.append(export.svg_to_png(svg, out_dir / f"{name}_{view}.png"))
 
-    from cadgen.report import write_report
+    from cadjson.report import write_report
 
     files.append(write_report(result, out_dir, files))
     result.files = files

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from build123d import Vector
 
-from cadgen.errors import CadgenError
-from cadgen.expr import Dim, evaluate, resolve_params
+from cadjson.errors import CadjsonError
+from cadjson.expr import Dim, evaluate, resolve_params
 
 UNIT_SCALE = {"mm": 1.0, "in": 25.4}
 
@@ -21,8 +21,8 @@ class Context:
         """A unitless number (counts, angles, degrees)."""
         try:
             return evaluate(dim, self.params)
-        except CadgenError as exc:
-            raise CadgenError(exc.message, self.feature_id) from None
+        except CadjsonError as exc:
+            raise CadjsonError(exc.message, self.feature_id) from None
 
     def length(self, dim: Dim) -> float:
         """A length in document units, returned in mm."""
@@ -37,5 +37,5 @@ class Context:
     def dir3(self, v) -> Vector:
         d = Vector(self.num(v[0]), self.num(v[1]), self.num(v[2]))
         if d.length == 0:
-            raise CadgenError("direction vector cannot be zero", self.feature_id)
+            raise CadjsonError("direction vector cannot be zero", self.feature_id)
         return d.normalized()

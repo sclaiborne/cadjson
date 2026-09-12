@@ -1,5 +1,5 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "board_profile_path",
   "description": "Same board as board_profile.json, written as one closed path of relative moves instead of a rectangle plus cuts. Kept for comparing readability; delete whichever style loses.",
   "units": "mm",

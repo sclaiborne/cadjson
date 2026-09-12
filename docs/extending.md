@@ -1,4 +1,4 @@
-# Extending cadgen
+# Extending cadjson
 
 Two mechanisms: `extends` for part variants (no code), and plugins for new feature types (Python).
 
@@ -7,7 +7,7 @@ Two mechanisms: `extends` for part variants (no code), and plugins for new featu
 A variant file names a base part and says only what differs:
 
 ```jsonc
-{ "schema": "cadgen/0.1", "name": "board_profile_long",
+{ "schema": "cadjson/0.1", "name": "board_profile_long",
   "extends": "board_profile.json",             // relative to this file; chains are fine
   "params": { "L": 150, "D": 130, "h": 24 },   // override or add params
   "drop": ["notch"],                           // leave out base features by id (optional)
@@ -39,15 +39,15 @@ Because the variant is a real document after merging, everything works on it: bu
 ## Plugins: new feature types
 
 A plugin is a Python package (or a module on the path while developing) that registers feature
-types with cadgen's registry. cadgen finds packages through the `cadgen.plugins` entry-point
-group and modules through `CADGEN_PLUGINS=module_a,module_b`.
+types with cadjson's registry. cadjson finds packages through the `cadjson.plugins` entry-point
+group and modules through `CADJSON_PLUGINS=module_a,module_b`.
 
-Minimal plugin (see `examples/plugins/cadgen_gear` for a complete one with packaging):
+Minimal plugin (see `examples/plugins/cadjson_gear` for a complete one with packaging):
 
 ```python
 from typing import Literal
 from build123d import Circle
-from cadgen.schema import Dim, FeatureBase, Op, PlaneRef
+from cadjson.schema import Dim, FeatureBase, Op, PlaneRef
 
 class Disc(FeatureBase):
     type: Literal["disc"]        # the JSON "type" value
@@ -74,7 +74,7 @@ What the build function gets:
 | `extrude(sketch, plane, distance=, through=, both=, taper=, op=)` | extrude and combine |
 | `combine(solid, op)` | combine any build123d solid with the body |
 | `builder` | the underlying Builder for fillet/chamfer/shell/... |
-| `error(message, hints)` | a CadgenError naming this feature |
+| `error(message, hints)` | a CadjsonError naming this feature |
 
 A plugin feature must produce geometry (through `extrude` or `combine`) or the build reports it.
 If the feature refers to other feature ids, give the model a `refs()` method returning them so
@@ -84,8 +84,8 @@ Optional exporters: `registry.fusion_emitter("disc")` and `registry.python_emitt
 decorate functions `(feat, exporter)` that emit code; without them the exporters report the
 feature as unsupported.
 
-Plugin types appear in validation errors, in `cadgen plugins`, and in
-`cadgen schema --with-plugins`. The committed `schema/cadgen-0.1.schema.json` is built-ins only.
+Plugin types appear in validation errors, in `cadjson plugins`, and in
+`cadjson schema --with-plugins`. The committed `schema/cadjson-0.1.schema.json` is built-ins only.
 
 Sketch shapes and selectors are not pluggable yet; a feature that needs a special 2D shape
 builds it directly with build123d, as the gear does.

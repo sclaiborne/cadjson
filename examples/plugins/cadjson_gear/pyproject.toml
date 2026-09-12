@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cadjson-gear"
+version = "0.1.0"
+description = "Example cadjson plugin: a simple spur gear feature"
+requires-python = ">=3.11"
+dependencies = ["cadjson"]
+
+# This is how cadjson finds the plugin once the package is installed.
+[project.entry-points."cadjson.plugins"]
+gear = "cadjson_gear"
+
+[tool.setuptools]
+py-modules = ["cadjson_gear"]

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from cadgen import export
+from cadjson import export
 
 
 @dataclass

@@ -3,39 +3,43 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cadgen"
-version = "0.1.1"
+name = "cadjson"
+version = "0.2.0"
 description = "JSON feature-tree to CAD (STEP, STL, 2D drawings) via build123d"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "sclaiborne" }]
+urls = { Homepage = "https://github.com/sclaiborne/CAD-Generator" }
 dependencies = [
     # draftwright pins build123d <0.11 on Python <3.13, so accept 0.10 too
     "build123d>=0.10,<0.12",
     "pydantic>=2.7",
     "click>=8.1",
     "resvg-py>=0.1",
-    "draftwright>=0.4.28",
     # threads; 0.3 requires build123d 0.11.1 which draftwright forbids on Python < 3.13
     "bd_warehouse>=0.2,<0.3",
-    # cadgen compare (mesh distance against a reference STL)
+    # cadjson compare (mesh distance against a reference STL)
     "trimesh>=4",
     "rtree>=1",
 ]
 
 [project.optional-dependencies]
+# dimensioned drawing sheets; draftwright is AGPL-3 (see README, Licensing)
+sheets = ["draftwright>=0.4.28"]
 dev = [
     "pytest>=8",
+    "draftwright>=0.4.28",
 ]
 
 [project.scripts]
-cadgen = "cadgen.cli:main"
+cadjson = "cadjson.cli:main"
 
 [tool.setuptools.package-data]
-cadgen = ["skill/SKILL.md"]
+cadjson = ["skill/SKILL.md"]
 
 [tool.setuptools.packages.find]
-include = ["cadgen*"]
+include = ["cadjson*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,7 +1,7 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "gear_demo",
-  "description": "Uses the example gear plugin (examples/plugins/cadgen_gear). Build with CADGEN_PLUGINS=cadgen_gear and the plugin folder on PYTHONPATH, or pip install the plugin.",
+  "description": "Uses the example gear plugin (examples/plugins/cadjson_gear). Build with CADJSON_PLUGINS=cadjson_gear and the plugin folder on PYTHONPATH, or pip install the plugin.",
   "units": "mm",
   "params": { "teeth": 24, "module": 2, "thick": 8, "bore": 6 },
   "features": [

@@ -1,4 +1,4 @@
-"""Pydantic models for the cadgen document format (docs/schema-v0.md).
+"""Pydantic models for the cadjson document format (docs/schema-v0.md).
 
 These are the single source of truth for validation, the published JSON Schema, and docs.
 """
@@ -9,7 +9,9 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from cadgen import SCHEMA_VERSION
+from cadjson import SCHEMA_VERSION
+
+LEGACY_SCHEMA_VERSIONS = ("cadgen/0.1",)  # the pre-rename schema string is still accepted
 
 Dim = Union[int, float, str]
 Vec2 = tuple[Dim, Dim]
@@ -329,7 +331,7 @@ class Sweep(FeatureBase):
 
 class PartRef(FeatureBase):
     type: Literal["part"]
-    file: str = Field(description="another cadgen part file, relative to this file")
+    file: str = Field(description="another cadjson part file, relative to this file")
     at: Vec3 = (0, 0, 0)
     rotate: Vec3 = Field((0, 0, 0), description="degrees about X, Y, Z applied before translation")
     params: dict[str, Dim] = Field({}, description="override the imported part's params")
@@ -458,7 +460,7 @@ class Document(Model):
 
     @model_validator(mode="after")
     def _check(self):
-        if self.schema_version != SCHEMA_VERSION:
+        if self.schema_version not in (SCHEMA_VERSION, *LEGACY_SCHEMA_VERSIONS):
             raise ValueError(f'schema must be "{SCHEMA_VERSION}", got "{self.schema_version}"')
         if self.drop and self.extends is None:
             raise ValueError("drop needs extends")
@@ -522,7 +524,7 @@ def _feature_refs(f: FeatureBase) -> list[str]:
 
 def json_schema(with_plugins: bool = False) -> dict:
     if with_plugins:
-        from cadgen.plugins import registry
+        from cadjson.plugins import registry
 
         return registry.document_model().model_json_schema(by_alias=True)
     return Document.model_json_schema(by_alias=True)

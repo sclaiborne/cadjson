@@ -1,5 +1,5 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "board_profile_filleted",
   "description": "board_profile with softened edges: outer (convex) corners of the body get a larger radius than the inner (concave) corners of the groove and notch.",
   "units": "mm",

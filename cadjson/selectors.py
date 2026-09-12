@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from build123d import Axis, Edge, Face, Shape, Vector
 
-from cadgen.context import Context
-from cadgen.errors import CadgenError
-from cadgen.schema import EdgeSelector, FaceSel, FaceSelector, Range
+from cadjson.context import Context
+from cadjson.errors import CadjsonError
+from cadjson.schema import EdgeSelector, FaceSel, FaceSelector, Range
 
 AXIS = {"X": Vector(1, 0, 0), "Y": Vector(0, 1, 0), "Z": Vector(0, 0, 1)}
 
@@ -152,13 +152,13 @@ class Selection:
             try:
                 cands = [cands[sel.nth]]
             except IndexError:
-                raise CadgenError(
+                raise CadjsonError(
                     f"face selector nth={sel.nth} but only {len(cands)} face(s) matched {', '.join(steps)}",
                     ctx.feature_id,
                     [f"candidate: {_describe_face(f)}" for f in cands[:20]],
                 ) from None
         if not cands:
-            raise CadgenError(
+            raise CadjsonError(
                 f"face selector matched nothing ({', '.join(steps) or 'no filters'})",
                 ctx.feature_id,
                 self._face_hints(sel),
@@ -219,7 +219,7 @@ class Selection:
             try:
                 cands = [cands[sel.nth]]
             except IndexError:
-                raise CadgenError(
+                raise CadjsonError(
                     f"edge selector nth={sel.nth} but only {len(cands)} edge(s) matched {', '.join(steps)}",
                     ctx.feature_id,
                     [f"candidate: {_describe_edge(e)}" for e in cands[:20]],
@@ -229,7 +229,7 @@ class Selection:
             hints = [f"available: {_describe_edge(e)}" for e in pool[:20]]
             if len(pool) > 20:
                 hints.append(f"... and {len(pool) - 20} more")
-            raise CadgenError(f"edge selector matched nothing ({', '.join(steps) or 'no filters'})", ctx.feature_id, hints)
+            raise CadjsonError(f"edge selector matched nothing ({', '.join(steps) or 'no filters'})", ctx.feature_id, hints)
         return cands
 
     def is_convex(self, edge: Edge) -> bool | None:

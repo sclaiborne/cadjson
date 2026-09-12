@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from build123d import Face, Plane, Vector
 
-from cadgen.context import Context
-from cadgen.errors import CadgenError
-from cadgen.schema import ExplicitPlane, FacePlane, OffsetPlane, PlaneRef
+from cadjson.context import Context
+from cadjson.errors import CadjsonError
+from cadjson.schema import ExplicitPlane, FacePlane, OffsetPlane, PlaneRef
 
 NAMED = {"XY": Plane.XY, "XZ": Plane.XZ, "YZ": Plane.YZ}
 
@@ -41,16 +41,16 @@ def resolve_plane(ref: PlaneRef, ctx: Context, select_faces) -> Plane:
     if isinstance(ref, FacePlane):
         faces = select_faces(ref.face)
         if len(faces) != 1:
-            raise CadgenError(
+            raise CadjsonError(
                 f"a face plane needs exactly one face, selector matched {len(faces)}",
                 ctx.feature_id,
                 ["add nth, near, or of to narrow it down"],
             )
         face = faces[0]
         if face.geom_type.name != "PLANE":
-            raise CadgenError(f"cannot sketch on a {face.geom_type.name.lower()} face; only planar faces", ctx.feature_id)
+            raise CadjsonError(f"cannot sketch on a {face.geom_type.name.lower()} face; only planar faces", ctx.feature_id)
         return face_plane(face)
     if isinstance(ref, ExplicitPlane):
         x_dir = ctx.dir3(ref.x_dir) if ref.x_dir is not None else None
         return plane_from_normal(ctx.vec3(ref.origin), ctx.dir3(ref.normal), x_dir)
-    raise CadgenError(f"unknown plane reference {ref!r}", ctx.feature_id)
+    raise CadjsonError(f"unknown plane reference {ref!r}", ctx.feature_id)

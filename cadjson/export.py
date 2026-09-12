@@ -23,7 +23,7 @@ from build123d import (
     export_stl,
 )
 
-from cadgen.errors import CadgenError
+from cadjson.errors import CadjsonError
 
 VIEWS: dict[str, tuple[tuple[float, float, float], tuple[float, float, float]]] = {
     # name: (direction the viewer sits in, up vector)
@@ -49,15 +49,15 @@ def write_stl(part: Part, path: Path, tolerance: float, angular_tolerance: float
 
 def write_3mf(part: Part, path: Path, tolerance: float, angular_tolerance: float, *,
               name: str | None = None, part_number: str | None = None) -> Path:
-    from cadgen import __version__
+    from cadjson import __version__
 
     m = Mesher()
     m.add_shape(part, linear_deflection=tolerance, angular_deflection=angular_tolerance, part_number=part_number)
-    m.add_meta_data("cadgen", "generator", f"cadgen {__version__}", "str", True)
+    m.add_meta_data("cadjson", "generator", f"cadjson {__version__}", "str", True)
     if name:
-        m.add_meta_data("cadgen", "name", name, "str", True)
+        m.add_meta_data("cadjson", "name", name, "str", True)
     if part_number:
-        m.add_meta_data("cadgen", "part_number", part_number, "str", True)
+        m.add_meta_data("cadjson", "part_number", part_number, "str", True)
     m.write(str(path))
     return path
 
@@ -119,7 +119,7 @@ def section_view(part: Part, plane: Plane, flip: bool = False):
     remove = view * Box(size, size, size, align=(Align.CENTER, Align.CENTER, Align.MIN))
     kept = part - remove
     if kept.volume < 1e-6 or abs(kept.volume - part.volume) < 1e-6:
-        raise CadgenError("section plane does not pass through the part")
+        raise CadjsonError("section plane does not pass through the part")
     local = view.to_local_coords(kept)
     cut_faces = [
         f.translate((0, 0, -f.center().Z))
@@ -154,7 +154,14 @@ def write_section_svg(part: Part, plane: Plane, path: Path, *, flip: bool = Fals
 def write_sheet(part: Part, stem: Path, *, title: str, formats: list[str], dimensions: bool, projection: str,
                 page: str | None, scale: float | None, title_block) -> list[Path]:
     """Full drawing sheet: third-angle views, iso, automatic dimensions, title block."""
-    from draftwright import build_drawing
+    try:
+        from draftwright import build_drawing
+    except ImportError:
+        raise CadjsonError(
+            "drawing sheets need the optional draftwright package",
+            hints=["pip install \"cadjson[sheets]\"  (draftwright is AGPL-3; see README, Licensing)",
+                   "or drop \"sheet\": true / --sheet to get views and previews without a sheet"],
+        ) from None
 
     log = io.StringIO()
     try:
@@ -178,7 +185,7 @@ def write_sheet(part: Part, stem: Path, *, title: str, formats: list[str], dimen
             )
             written = drawing.export(str(stem), formats=tuple(formats))
     except Exception as exc:
-        raise CadgenError(f"drawing sheet failed: {exc}", hints=[ln for ln in log.getvalue().splitlines()[-5:]]) from None
+        raise CadjsonError(f"drawing sheet failed: {exc}", hints=[ln for ln in log.getvalue().splitlines()[-5:]]) from None
     if isinstance(written, dict):
         paths = [Path(p) for p in written.values() if p]
     else:

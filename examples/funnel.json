@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "funnel",
   "description": "Funnel: loft from a wide circle to a narrow one, shelled open at both ends. Exercises loft between sketches on offset planes and multi-face shell openings.",
   "units": "mm",

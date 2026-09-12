@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from build123d import Plane
 
-from cadgen import export
-from cadgen.build import build_document, load_document, write_outputs
-from cadgen.errors import CadgenError
+from cadjson import export
+from cadjson.build import build_document, load_document, write_outputs
+from cadjson.errors import CadjsonError
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 
@@ -23,7 +23,7 @@ def test_section_view_has_cut_faces_and_edges():
 
 def test_section_plane_missing_part_is_an_error():
     part = build_document(load_document(EXAMPLES / "board_profile.json")).part
-    with pytest.raises(CadgenError, match="does not pass through"):
+    with pytest.raises(CadjsonError, match="does not pass through"):
         export.section_view(part, Plane.XY.offset(500))
 
 

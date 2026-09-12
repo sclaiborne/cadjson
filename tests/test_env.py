@@ -1,4 +1,4 @@
-"""Toolchain sanity checks. These do not test cadgen itself yet (Phase 0)."""
+"""Toolchain sanity checks. These do not test cadjson itself yet (Phase 0)."""
 
 import json
 from pathlib import Path
@@ -20,7 +20,7 @@ def test_examples_are_valid_json_with_required_keys():
     assert files, "no example parts found"
     for f in files:
         doc = json.loads(f.read_text(encoding="utf-8"))
-        assert doc["schema"] == "cadgen/0.1", f.name
+        assert doc["schema"] == "cadjson/0.1", f.name
         assert isinstance(doc["features"], list) and doc["features"], f.name
         ids = [feat["id"] for feat in doc["features"]]
         assert len(ids) == len(set(ids)), f"duplicate feature ids in {f.name}"

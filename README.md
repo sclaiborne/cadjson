@@ -1,76 +1,99 @@
-# CAD-Generator (cadgen)
+# cadjson
 
-CAD as text. A part is a JSON file describing a feature tree (sketch, extrude, cut, revolve,
-fillet, chamfer, shell, pattern, mirror). `cadgen` validates it and builds:
+CAD as text. A part is one JSON file: named dimensions, an ordered list of features, and the
+outputs you want. `cadjson` builds it with the OpenCascade kernel and writes STEP for any CAD
+package, STL and 3MF for printing, 2D drawings with hidden lines, section views, an annotated
+drawing sheet, PNG previews, a Fusion 360 script that rebuilds the part with a native timeline,
+and a `report.json` with the numbers. Because the source is text, parts live in git, diff
+cleanly, and can be written or edited by an AI. The repo ships a Claude Code skill for that.
 
-- STEP (opens in Fusion 360, FreeCAD, anything);
-- STL / 3MF for 3D printing;
-- 2D drawings (front / top / right / iso, hidden lines, optional dimensions) as SVG / DXF / PDF;
-- PNG previews for review and for AI feedback loops.
+<p align="center">
+  <img src="examples/previews/l_bracket_drawing.svg" width="640" alt="drawing sheet generated from l_bracket.json">
+</p>
 
-Engine: [build123d](https://build123d.readthedocs.io/) on the OpenCascade kernel.
+```jsonc
+{ "schema": "cadjson/0.1", "name": "l_bracket", "units": "mm",
+  "params": { "width": 60, "base_len": 40, "wall_h": 35, "t": 4, "hole_d": 5.5 },
+  "features": [
+    { "id": "profile", "type": "extrude", "distance": "width",
+      "sketch": { "plane": "YZ", "shapes": [ { "type": "path", "start": [0, 0],
+        "segments": [ "right base_len", "up t", "left base_len - t", "up wall_h - t", "left t", "close" ] } ] } },
+    { "id": "inside_fillet", "type": "fillet", "radius": 3,
+      "edges": { "of": "profile", "parallel_to": "X", "near": ["width / 2", "t", "t"] } },
+    { "id": "wall_holes", "type": "hole", "face": { "of": "profile", "normal": "-Y" },
+      "at": [[-15, 8], [15, 8]], "diameter": "hole_d", "through": true }
+  ],
+  "outputs": { "step": true, "stl": true, "drawing": { "sheet": true, "dimensions": true } } }
+```
+
+## Install
+
+Python 3.11 or newer. Wheels exist for Windows, Linux and macOS.
+
+```
+pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.2.0"
+pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.2.0"   # + dimensioned sheets
+```
+
+## Use
+
+```
+cadjson validate part.json          # schema and params, no geometry
+cadjson build part.json             # STEP, STL, views, previews, report -> out/<name>/
+cadjson build part.json --sheet     # plus the annotated drawing sheet (needs [sheets])
+cadjson info part.json              # every face and edge, for writing selectors
+cadjson compare part.json ref.stl   # volume, bbox and surface distance vs a reference mesh
+cadjson export-fusion part.json     # Fusion 360 script with a native parametric timeline
+cadjson export-python part.json     # the equivalent standalone build123d script
+cadjson init my-parts               # scaffold a parts repository, Claude skill included
+```
+
+## What it covers
+
+Features: extrude, revolve, fillet, chamfer, shell, holes (plain, counterbore, countersink,
+or a standard thread size such as `M3` / `#6-32` with tap or clearance fit), real ISO threads,
+mirror, linear and polar patterns, loft, sweep, text, imported parts, assemblies.
+Sketch shapes: rectangle (optionally rounded), circle, slot, polygon, points, path of
+relative moves and arcs, text, with add/subtract and linear/polar/grid patterns.
+Selectors pick faces and edges by the feature that made them, normal, direction, convexity,
+geometry type, size or proximity, never by index. Variants inherit a base part with
+`extends`; new feature types come from plugins.
+
+Format reference: [docs/schema-v0.md](docs/schema-v0.md). Fusion export:
+[docs/fusion-export.md](docs/fusion-export.md). Variants and plugins:
+[docs/extending.md](docs/extending.md). Options survey and plan: [PLANNING.md](PLANNING.md).
+Fourteen example parts with previews live in [examples/](examples/).
 
 ## Status
 
-Phases 1 to 5 done: the feature tree builds and exports (extrude, revolve, fillet, chamfer,
-shell, holes with standard thread sizes, real ISO threads, mirror, patterns, loft, sweep,
-text, imported parts, assemblies); drawings include per-view SVG/DXF with hidden lines,
-section views, and a fully annotated sheet (dimensions, callouts, title block) as
-PDF/SVG/DXF; `export-fusion` writes a Fusion 360 script that rebuilds a part with a native
-parametric timeline ([docs/fusion-export.md](docs/fusion-export.md)); `export-python` writes
-the equivalent build123d script. See [PLANNING.md](PLANNING.md) for the option survey and
-plan, and [docs/schema-v0.md](docs/schema-v0.md) for the format.
-
-Note: the sheet generator (draftwright, AGPL-3) pins build123d to 0.10 on Python 3.12.
-
-## Usage
-
-```bash
-.venv\Scripts\cadgen validate examples\board_profile.json
-.venv\Scripts\cadgen build examples\board_profile.json
-.venv\Scripts\cadgen build examples\*.json --views front,top,right,iso
-.venv\Scripts\cadgen info examples\board_profile.json     # list faces and edges, to write selectors
-.venv\Scripts\cadgen export-fusion examples\board_profile.json   # Fusion 360 script with a native timeline
-.venv\Scripts\cadgen export-python examples\board_profile.json   # standalone build123d script
-.venv\Scripts\cadgen schema -o schema\cadgen-0.1.schema.json     # JSON Schema (committed copy lives there)
-```
-
-Every build also writes `out/<name>/report.json` with volume, bounding box, resolved params,
-per-feature timings and the list of files. Add `"$schema": "../schema/cadgen-0.1.schema.json"`
-to a part for editor validation and completion.
-
-## Variants and plugins
-
-A variant file says `"extends": "base.json"` and only what differs: params, replaced or added
-features, dropped features. New feature types come from plugins registered through the
-`cadgen.plugins` entry-point group; see [docs/extending.md](docs/extending.md) and the example
-gear plugin in `examples/plugins/`.
+Version 0.2.0. Everything above builds and is covered by tests on Windows and Linux. Known
+limits: the Fusion export is verified against a fake API, not yet inside Fusion; sketch
+geometry in the Fusion script is numeric (parameters drive feature values, not sketch
+dimensions); sheets dimension automatically with no way to request a specific dimension;
+section views use a grey fill rather than hatching; threads, loft, sweep, text and assemblies
+are not exported to Fusion.
 
 ## Working with Claude Code
 
-The project ships a skill at `.claude/skills/cadgen/SKILL.md`. In Claude Code, asking for a
-part ("make a 40 mm spacer with four M3 holes") triggers it: Claude writes the JSON, runs
-`cadgen validate` and `cadgen build`, reads the report and the PNG previews, and iterates on
-selector or fillet errors using `cadgen info`.
+`.claude/skills/cadjson/SKILL.md` teaches Claude the format and the workflow: write the
+JSON, validate, build, read the report and look at the previews, fix selector errors with
+`info`. `cadjson init` copies the skill into a parts repository. Parts you would rather not
+publish belong in a repository of their own, not here.
 
-`build` writes to `out/<name>/`: STEP, STL, one SVG per view, section views, the drawing
-sheet, and PNG previews. Each part's `outputs` block sets the defaults; `--step/--no-step`,
-`--stl/--no-stl`, `--png/--no-png`, `--sheet/--no-sheet`, `--views` and `-o` override them.
+## Licensing
+
+cadjson is MIT. Its geometry dependencies (build123d, bd_warehouse, trimesh, pydantic, click)
+are Apache-2.0 or MIT. Dimensioned drawing sheets use **draftwright, which is AGPL-3**; it is
+an optional extra so that installing cadjson does not pull it in. If you install `[sheets]`
+and redistribute the combination, the AGPL applies to that combination.
 
 ## Layout
 
 ```
-cadgen/        package (schema models, build123d backend, CLI)
-docs/          schema reference and design notes
-examples/      hand-written example parts in the draft schema
-experiments/   throwaway scripts used to verify the toolchain
+cadjson/       package: schema, expressions, planes, sketches, selectors, builder, exports, CLI
+docs/          format reference, Fusion export, extending
+examples/      example parts, previews, an example plugin
+schema/        generated JSON Schema (cadjson schema -o schema/cadjson-0.1.schema.json)
 tests/
-```
-
-## Setup (Windows, Python 3.11+)
-
-```bash
-py -3.12 -m venv .venv
-.venv\Scripts\python -m pip install -e ".[dev]"
-.venv\Scripts\python -m pytest
+experiments/   throwaway scripts that verified the toolchain during development
 ```

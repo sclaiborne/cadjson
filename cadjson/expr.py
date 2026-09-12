@@ -10,7 +10,7 @@ import math
 import re
 from collections.abc import Mapping
 
-from cadgen.errors import CadgenError
+from cadjson.errors import CadjsonError
 
 Dim = int | float | str
 
@@ -198,7 +198,7 @@ def parse_ast(text: str):
     try:
         return _AstParser(text).parse()
     except ValueError as exc:
-        raise CadgenError(f"bad expression {text!r}: {exc}") from None
+        raise CadjsonError(f"bad expression {text!r}: {exc}") from None
 
 
 def names_in(dim: Dim) -> set[str]:
@@ -310,15 +310,15 @@ def to_fusion(dim: Dim, kinds: Mapping[str, str], expect: str) -> str:
 def evaluate(dim: Dim, params: Mapping[str, float]) -> float:
     """Evaluate a dim (number or expression string) against resolved params."""
     if isinstance(dim, bool):
-        raise CadgenError(f"expected a number or expression, got {dim!r}")
+        raise CadjsonError(f"expected a number or expression, got {dim!r}")
     if isinstance(dim, (int, float)):
         return float(dim)
     if not isinstance(dim, str):
-        raise CadgenError(f"expected a number or expression, got {dim!r}")
+        raise CadjsonError(f"expected a number or expression, got {dim!r}")
     try:
         return _Parser(dim, params).parse()
     except ValueError as exc:
-        raise CadgenError(f"bad expression {dim!r}: {exc}") from None
+        raise CadjsonError(f"bad expression {dim!r}: {exc}") from None
 
 
 def resolve_params(raw: Mapping[str, Dim]) -> dict[str, float]:
@@ -334,7 +334,7 @@ def resolve_params(raw: Mapping[str, Dim]) -> dict[str, float]:
                 raise KeyError(name)
             if name in visiting:
                 cycle = " -> ".join(visiting + [name])
-                raise CadgenError(f"params reference each other in a cycle: {cycle}")
+                raise CadjsonError(f"params reference each other in a cycle: {cycle}")
             visiting.append(name)
             try:
                 resolved[name] = evaluate(raw[name], self)
@@ -355,6 +355,6 @@ def resolve_params(raw: Mapping[str, Dim]) -> dict[str, float]:
     for name in raw:
         try:
             lazy[name]
-        except CadgenError as exc:
-            raise CadgenError(f"param {name!r}: {exc.message}") from None
+        except CadjsonError as exc:
+            raise CadjsonError(f"param {name!r}: {exc.message}") from None
     return resolved

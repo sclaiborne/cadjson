@@ -24,9 +24,9 @@ from build123d import (
     make_face,
 )
 
-from cadgen.context import Context
-from cadgen.errors import CadgenError
-from cadgen.schema import (
+from cadjson.context import Context
+from cadjson.errors import CadjsonError
+from cadjson.schema import (
     CircleShape,
     GridPattern,
     LinearPattern,
@@ -66,7 +66,7 @@ def _rect(shape: RectShape, ctx: Context) -> B3dSketch:
         from build123d import RectangleRounded
 
         if radius * 2 >= min(w, h) - 1e-9:
-            raise CadgenError(f"rect corner radius {radius:g} is too large for a {w:g} x {h:g} rectangle", ctx.feature_id)
+            raise CadjsonError(f"rect corner radius {radius:g} is too large for a {w:g} x {h:g} rectangle", ctx.feature_id)
         return Location((cx, cy, 0)) * RectangleRounded(w, h, radius, rotation=angle)
     return Location((cx, cy, 0)) * Rectangle(w, h, rotation=angle)
 
@@ -107,7 +107,7 @@ def _text(shape: TextShape, ctx: Context) -> B3dSketch:
         if not font_path.is_absolute():
             font_path = (ctx.base_dir or Path.cwd()) / font_path
         if not font_path.exists():
-            raise CadgenError(f"font file not found: {font_path}", ctx.feature_id)
+            raise CadjsonError(f"font file not found: {font_path}", ctx.feature_id)
         font_path = str(font_path)
     txt = Text(shape.text, ctx.length(shape.size), font=shape.font, font_path=font_path, font_style=style,
                align=(Align.CENTER, Align.CENTER))
@@ -123,7 +123,7 @@ def path_edges(start_pt, segments: list[str], ctx: Context, allow_open: bool = F
     for i, seg in enumerate(segments):
         m = _SEG.match(seg)
         if not m:
-            raise CadgenError(
+            raise CadjsonError(
                 f"path segment {i} {seg!r}: unknown form",
                 ctx.feature_id,
                 ['use "right L", "up h", "line du, dv", "arc du, dv, r", "to u, v", or "close"'],
@@ -133,7 +133,7 @@ def path_edges(start_pt, segments: list[str], ctx: Context, allow_open: bool = F
 
         def need(n: int) -> list[float]:
             if len(args) != n:
-                raise CadgenError(f"path segment {i} {seg!r}: {word} needs {n} value(s), got {len(args)}", ctx.feature_id)
+                raise CadjsonError(f"path segment {i} {seg!r}: {word} needs {n} value(s), got {len(args)}", ctx.feature_id)
             return [ctx.length(a) for a in args]
 
         if word == "close":
@@ -141,7 +141,7 @@ def path_edges(start_pt, segments: list[str], ctx: Context, allow_open: bool = F
                 edges.append(Line(cur, start))
             closed = True
             if i != len(segments) - 1:
-                raise CadgenError(f"path segment {i}: close must be the last segment", ctx.feature_id)
+                raise CadjsonError(f"path segment {i}: close must be the last segment", ctx.feature_id)
             break
         if word in ("right", "left", "up", "down"):
             (d,) = need(1)
@@ -161,16 +161,16 @@ def path_edges(start_pt, segments: list[str], ctx: Context, allow_open: bool = F
             nxt = cur + Vector(du, dv)
             chord = (nxt - cur).length
             if abs(r) * 2 < chord - 1e-9:
-                raise CadgenError(
+                raise CadjsonError(
                     f"path segment {i} {seg!r}: radius {abs(r):g} is smaller than half the chord {chord / 2:g}",
                     ctx.feature_id,
                 )
             edges.append(RadiusArc(cur, nxt, r))
         cur = nxt
     if not closed and not allow_open:
-        raise CadgenError('path must end with "close"', ctx.feature_id)
+        raise CadjsonError('path must end with "close"', ctx.feature_id)
     if closed and allow_open:
-        raise CadgenError("an open path (sweep) must not end with close", ctx.feature_id)
+        raise CadjsonError("an open path (sweep) must not end with close", ctx.feature_id)
     return edges, closed
 
 
@@ -227,7 +227,7 @@ def _pattern_locations(pattern, ctx: Context) -> list[Location]:
         ou = -(nu - 1) / 2 * su if pattern.centered else 0.0
         ov = -(nv - 1) / 2 * sv if pattern.centered else 0.0
         return [Location((ou + i * su, ov + j * sv, 0)) for i in range(nu) for j in range(nv)]
-    raise CadgenError(f"unknown pattern {pattern!r}", ctx.feature_id)
+    raise CadjsonError(f"unknown pattern {pattern!r}", ctx.feature_id)
 
 
 def build_sketch(model: Sketch, ctx: Context) -> B3dSketch:
@@ -243,10 +243,10 @@ def build_sketch(model: Sketch, ctx: Context) -> B3dSketch:
             result = merged if result is None else result + merged
         else:
             if result is None:
-                raise CadgenError(f"sketch shape {idx} subtracts but nothing was added before it", ctx.feature_id)
+                raise CadjsonError(f"sketch shape {idx} subtracts but nothing was added before it", ctx.feature_id)
             result = result - merged
     if result is None or result.area < 1e-9:
-        raise CadgenError("sketch has no area", ctx.feature_id)
+        raise CadjsonError("sketch has no area", ctx.feature_id)
     return result
 
 

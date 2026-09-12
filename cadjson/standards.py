@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from cadgen.errors import CadgenError
+from cadjson.errors import CadjsonError
 
 IN = 25.4
 
@@ -75,7 +75,7 @@ def thread_spec(designation: str) -> ThreadSpec:
     if m:
         major = float(m.group(1))
         if major not in _METRIC:
-            raise CadgenError(f"unknown metric size {designation!r}; known: " + ", ".join(f"M{k:g}" for k in _METRIC))
+            raise CadjsonError(f"unknown metric size {designation!r}; known: " + ", ".join(f"M{k:g}" for k in _METRIC))
         pitch, tap, close, medium = _METRIC[major]
         if m.group(2):  # fine pitch given
             pitch = float(m.group(2))
@@ -84,7 +84,7 @@ def thread_spec(designation: str) -> ThreadSpec:
     if d in _UNIFIED:
         major, tpi, tap, close, normal = _UNIFIED[d]
         return ThreadSpec(d, major * IN, IN / tpi, tap * IN, close * IN, normal * IN)
-    raise CadgenError(
+    raise CadjsonError(
         f"unknown thread {designation!r}",
         hints=["metric: M3, M6, M8x1 (fine)", "unified: " + ", ".join(_UNIFIED)],
     )

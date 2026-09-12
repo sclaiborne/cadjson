@@ -1,6 +1,6 @@
 # Fusion 360 export
 
-`cadgen export-fusion part.json` writes `out/<name>_fusion/` containing a Fusion 360 script
+`cadjson export-fusion part.json` writes `out/<name>_fusion/` containing a Fusion 360 script
 and its manifest. The script rebuilds the part inside Fusion with a **native parametric
 timeline**: sketches, extrudes, revolves, fillets, chamfers, shells, holes, mirrors and
 patterns, each editable in Fusion as if drawn by hand.
@@ -12,12 +12,12 @@ patterns, each editable in Fusion as if drawn by hand.
    `out/<name>_fusion/`.
 3. Select the script and press Run. A new design is created and built.
 
-Fusion has no headless mode, so cadgen cannot run this for you. The generated script is
-checked in cadgen's tests by executing it against a fake `adsk` API.
+Fusion has no headless mode, so cadjson cannot run this for you. The generated script is
+checked in cadjson's tests by executing it against a fake `adsk` API.
 
 ## What maps to what
 
-| cadgen | Fusion |
+| cadjson | Fusion |
 |---|---|
 | `params` | User parameters, with their expressions (`g = L - D - x` stays an expression) |
 | named planes `XY`, `XZ`, `YZ` | the root construction planes |
@@ -33,7 +33,7 @@ checked in cadgen's tests by executing it against a fake `adsk` API.
 
 ## Units and expressions
 
-Fusion needs units. cadgen infers, for every parameter, whether it is a length (used for a
+Fusion needs units. cadjson infers, for every parameter, whether it is a length (used for a
 size, distance, radius, position) or a plain number (used as a count or an angle), and
 creates it with unit `mm` or no unit. Expressions are rewritten so a bare literal added to a
 length gets `mm` (`h - 4` becomes `h - 4 mm`) while a literal multiplier stays bare
@@ -42,7 +42,7 @@ uses the evaluated number and lists it under "Notes" at the top of the file.
 
 ## How edges and faces are found
 
-cadgen resolves every selector while building the part with build123d, and records the
+cadjson resolves every selector while building the part with build123d, and records the
 bounding-box centre and the length (edges) or area (faces) of what was selected. The script
 matches those against the Fusion body at the same point in the timeline. Both kernels build
 the same geometry from the same features, so this is reliable for prismatic parts; if a
@@ -56,4 +56,4 @@ match fails the script reports which feature and what it was looking for.
 - `taper` on extrude is not exported.
 - Linear patterns along a custom vector create a construction axis; named axes use the root
   axes.
-- Only features cadgen knows about are exported; there is no round trip from Fusion.
+- Only features cadjson knows about are exported; there is no round trip from Fusion.

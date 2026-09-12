@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "tapped_block",
   "description": "Block with an M6 tapped through hole (real internal thread), two M3 clearance holes, and an engraved label. Exercises standard hole sizes, internal threads, and text.",
   "units": "mm",

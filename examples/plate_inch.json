@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "plate_inch",
   "description": "3 x 2 x 1/4 inch plate with six countersunk holes and a centre slot. Exercises inch units, countersinks, slots, and fillets specified in inches.",
   "units": "in",

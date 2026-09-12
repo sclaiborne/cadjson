@@ -1,6 +1,6 @@
 """Export a document as an Autodesk Fusion 360 script that rebuilds it with a native timeline.
 
-Strategy: cadgen builds the part with build123d exactly as `cadgen build` does, and while it
+Strategy: cadjson builds the part with build123d exactly as `cadjson build` does, and while it
 does so it records the geometry each Fusion feature needs: sketch curves in world coordinates,
 profile areas and centroids, and the bounding-box centre plus size of every edge or face a
 selector picked. The generated script replays the features through the Fusion API and finds
@@ -18,14 +18,14 @@ from pathlib import Path
 
 from build123d import Plane, Vector
 
-from cadgen import __version__
-from cadgen.build import _run_feature
-from cadgen.builder import Builder
-from cadgen.context import Context
-from cadgen.errors import CadgenError
-from cadgen.expr import UnitsError, names_in, to_fusion
-from cadgen.planes import AXIS, resolve_plane
-from cadgen.schema import (
+from cadjson import __version__
+from cadjson.build import _run_feature
+from cadjson.builder import Builder
+from cadjson.context import Context
+from cadjson.errors import CadjsonError
+from cadjson.expr import UnitsError, names_in, to_fusion
+from cadjson.planes import AXIS, resolve_plane
+from cadjson.schema import (
     Chamfer,
     Document,
     ExplicitPlane,
@@ -39,8 +39,8 @@ from cadgen.schema import (
     Revolve,
     Shell,
 )
-from cadgen.selectors import Selection
-from cadgen.sketch import build_sketch
+from cadjson.selectors import Selection
+from cadjson.sketch import build_sketch
 
 UNITLESS_KEYS = {"count", "angle", "start_angle", "sides", "taper", "normal", "dir", "direction", "x_dir", "scale"}
 
@@ -76,7 +76,7 @@ def infer_param_kinds(doc: Document) -> dict[str, str]:
                                                    "axis", "kind", "sort_by", "parallel_to", "segments"):
             try:
                 names = names_in(obj)
-            except CadgenError:
+            except CadjsonError:
                 return
             kind = "none" if key in UNITLESS_KEYS else "len"
             for n in names:
@@ -96,7 +96,7 @@ def infer_param_kinds(doc: Document) -> dict[str, str]:
                     try:
                         for n in names_in(piece.strip()):
                             kinds.setdefault(n, "len")
-                    except CadgenError:
+                    except CadjsonError:
                         pass
     # propagate through param expressions (a length param's operands are lengths, unless
     # already classified) and default the rest to length
@@ -125,7 +125,7 @@ class FusionExporter:
         """Fusion expression for a length; falls back to the evaluated value with a note."""
         try:
             return to_fusion(dim, self.kinds, "len")
-        except (UnitsError, CadgenError) as exc:
+        except (UnitsError, CadjsonError) as exc:
             value = self.ctx.length(dim)
             self.notes.append(f"{self.ctx.feature_id}: {dim!r} written as {value:g} mm ({exc})")
             return f"{value:g} mm"
@@ -133,13 +133,13 @@ class FusionExporter:
     def _angle(self, dim) -> str:
         try:
             return to_fusion(dim, self.kinds, "none") + " deg"
-        except (UnitsError, CadgenError):
+        except (UnitsError, CadjsonError):
             return f"{self.ctx.num(dim):g} deg"
 
     def _count(self, dim) -> str:
         try:
             return to_fusion(dim, self.kinds, "none")
-        except (UnitsError, CadgenError):
+        except (UnitsError, CadjsonError):
             return f"{int(round(self.ctx.num(dim)))}"
 
     # --- emit ------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ class FusionExporter:
     def export(self) -> str:
         doc = self.doc
         if doc.parts:
-            raise CadgenError("assemblies (parts) cannot be exported to Fusion yet; export the individual parts")
+            raise CadjsonError("assemblies (parts) cannot be exported to Fusion yet; export the individual parts")
         for name, expr in doc.params.items():
             unit = "mm" if self.kinds[name] == "len" else ""
             try:
@@ -198,7 +198,7 @@ class FusionExporter:
                 for edge in wire.edges():
                     kind = edge.geom_type.name
                     if kind not in ("LINE", "CIRCLE"):
-                        raise CadgenError(
+                        raise CadjsonError(
                             f"sketch contains {kind.lower()} curves (text?) which the Fusion exporter cannot write yet",
                             self.ctx.feature_id,
                         )
@@ -269,12 +269,12 @@ class FusionExporter:
         elif isinstance(feat, Hole):
             faces = self._selection().faces(feat.face)
             if len(faces) != 1:
-                raise CadgenError(f"hole face selector matched {len(faces)} faces, need exactly one", fid)
+                raise CadjsonError(f"hole face selector matched {len(faces)} faces, need exactly one", fid)
             plane = self._plane(FacePlane(face=feat.face))
             fkey = self._face_keys(faces)[0]
             pts = [_pt(plane.from_local_coords((*ctx.vec2(p), 0))) for p in feat.at]
             depth = "None" if feat.through else repr(self._len(feat.depth))
-            from cadgen.build import hole_diameter
+            from cadjson.build import hole_diameter
 
             diameter = self._len(feat.diameter) if feat.diameter is not None else f"{hole_diameter(feat, ctx):g} mm"
             cb = "None"
@@ -311,13 +311,13 @@ class FusionExporter:
                     f"{self._angle(feat.angle)!r})"
                 )
         else:
-            from cadgen.plugins import registry
+            from cadjson.plugins import registry
 
             plugin = registry.plugin_for(feat)
             if plugin is not None and plugin.fusion is not None:
                 plugin.fusion(feat, self)
                 return
-            raise CadgenError(
+            raise CadjsonError(
                 f"feature type {feat.type!r} cannot be exported to Fusion yet", fid,
                 ["supported: extrude, revolve, fillet, chamfer, shell, hole, mirror, pattern"],
             )
@@ -339,7 +339,7 @@ def export_fusion(doc: Document, out_dir: Path) -> list[Path]:
     manifest.write_text(json.dumps({
         "autodeskProduct": "Fusion360",
         "type": "script",
-        "author": "cadgen",
+        "author": "cadjson",
         "description": f"Rebuilds {doc.name} with a native parametric timeline",
         "supportedOS": "windows|mac",
         "editEnabled": True,
@@ -347,7 +347,7 @@ def export_fusion(doc: Document, out_dir: Path) -> list[Path]:
     return [py, manifest]
 
 
-TEMPLATE = '''"""{{NAME}}: generated by cadgen {{VERSION}}. Run from Fusion 360: Utilities > Add-Ins > Scripts.
+TEMPLATE = '''"""{{NAME}}: generated by cadjson {{VERSION}}. Run from Fusion 360: Utilities > Add-Ins > Scripts.
 
 Creates a new design and rebuilds the part with a native parametric timeline.
 Notes from the exporter:
@@ -420,7 +420,7 @@ class Helpers:
 
     def sketch(self, spec):
         sk = self.root.sketches.add(self.plane_entity(spec))
-        sk.name = "cadgen"
+        sk.name = "cadjson"
         return sk
 
     def sp(self, sk, p):
@@ -501,7 +501,7 @@ class Helpers:
         return ops.CutFeatureOperation if name == "cut" else ops.IntersectFeatureOperation
 
     def signed(self, expression, sk, normal):
-        """Flip an expression when Fusion's sketch normal opposes the cadgen plane normal."""
+        """Flip an expression when Fusion's sketch normal opposes the cadjson plane normal."""
         if self.sketch_normal(sk).dotProduct(self.V(normal)) < 0:
             return "-(%s)" % expression
         return expression
@@ -612,9 +612,9 @@ def run(context):
         H = Helpers(design, root)
 
 {{BODY}}
-        ui.messageBox("cadgen: built {{NAME}} with %d features" % len(F))
+        ui.messageBox("cadjson: built {{NAME}} with %d features" % len(F))
     except Exception:
         if ui:
-            ui.messageBox("cadgen script failed:\\n" + traceback.format_exc())
+            ui.messageBox("cadjson script failed:\\n" + traceback.format_exc())
         raise
 '''.replace("{{NAME!r}}", '"{{NAME}}"')

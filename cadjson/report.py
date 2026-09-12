@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from cadgen import SCHEMA_VERSION, __version__
+from cadjson import SCHEMA_VERSION, __version__
 
 
 def build_report(result, files: list[Path], notes: list[str] | None = None) -> dict:
@@ -15,7 +15,7 @@ def build_report(result, files: list[Path], notes: list[str] | None = None) -> d
     return {
         "name": doc.name,
         "schema": SCHEMA_VERSION,
-        "cadgen": __version__,
+        "cadjson": __version__,
         "units": doc.units,
         "params": result_params(result),
         "volume_mm3": round(part.volume, 4),
@@ -38,13 +38,13 @@ def build_report(result, files: list[Path], notes: list[str] | None = None) -> d
 
 
 def _extends_chain(doc) -> list[str]:
-    from cadgen.build import EXTENDS_CHAIN
+    from cadjson.build import EXTENDS_CHAIN
 
     return EXTENDS_CHAIN.get(id(doc), [])
 
 
 def result_params(result) -> dict[str, float]:
-    from cadgen.context import Context
+    from cadjson.context import Context
 
     ctx = Context(result.document.params, result.document.units)
     return {k: round(v, 6) for k, v in ctx.params.items()}

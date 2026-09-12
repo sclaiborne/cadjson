@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from cadgen.build import build_document, load_document, parse_document, write_outputs
-from cadgen.errors import CadgenError
-from cadgen.expr import evaluate, to_fusion
-from cadgen.standards import thread_spec
+from cadjson.build import build_document, load_document, parse_document, write_outputs
+from cadjson.errors import CadjsonError
+from cadjson.expr import evaluate, to_fusion
+from cadjson.standards import thread_spec
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 
@@ -22,15 +22,15 @@ def test_thread_specs():
     unc = thread_spec("1/4-20")
     assert unc.major == pytest.approx(6.35)
     assert unc.pitch == pytest.approx(1.27)
-    with pytest.raises(CadgenError, match="unknown"):
+    with pytest.raises(CadjsonError, match="unknown"):
         thread_spec("M7.5")
-    with pytest.raises(CadgenError, match="unknown thread"):
+    with pytest.raises(CadjsonError, match="unknown thread"):
         thread_spec("3/4-99")
 
 
 def test_standard_hole_diameter_is_in_mm_even_for_inch_documents():
     doc = parse_document({
-        "schema": "cadgen/0.1", "name": "t", "units": "in",
+        "schema": "cadjson/0.1", "name": "t", "units": "in",
         "features": [
             {"id": "b", "type": "extrude", "distance": 0.5,
              "sketch": {"plane": "XY", "shapes": [{"type": "rect", "w": 2, "h": 2}]}},
@@ -75,7 +75,7 @@ def test_text_font_path(tmp_path):
     if not font.exists():
         pytest.skip("Verdana Bold not installed")
     doc = {
-        "schema": "cadgen/0.1", "name": "t",
+        "schema": "cadjson/0.1", "name": "t",
         "features": [
             {"id": "plate", "type": "extrude", "distance": 2,
              "sketch": {"plane": "XY", "shapes": [{"type": "rect", "w": 80, "h": 30}]}},
@@ -92,7 +92,7 @@ def test_text_font_path(tmp_path):
     bad["features"] = [doc["features"][0], {**doc["features"][1], "sketch": {"plane": {"face": "top"}, "shapes": [
         {"type": "text", "text": "abc", "size": 12, "font_path": "missing.ttf"}]}}]
     (tmp_path / "bad.json").write_text(json.dumps(bad))
-    with pytest.raises(CadgenError, match="font file not found"):
+    with pytest.raises(CadjsonError, match="font file not found"):
         build_document(load_document(tmp_path / "bad.json"))
 
 
@@ -121,14 +121,14 @@ def test_assembly_places_parts_with_overrides(tmp_path):
 
 def test_part_feature_cuts_an_imported_part():
     doc = parse_document({
-        "schema": "cadgen/0.1", "name": "mold",
+        "schema": "cadjson/0.1", "name": "mold",
         "features": [
             {"id": "block", "type": "extrude", "distance": 20,
              "sketch": {"plane": "XY", "shapes": [{"type": "rect", "w": 40, "h": 40}]}},
             {"id": "cavity", "type": "part", "file": "spacer.json", "op": "cut", "at": [0, 0, 5]},
         ],
     })
-    from cadgen.build import SOURCE_PATHS
+    from cadjson.build import SOURCE_PATHS
 
     SOURCE_PATHS[id(doc)] = EXAMPLES / "mold.json"  # resolve spacer.json relative to examples/
     spacer = build_document(load_document(EXAMPLES / "spacer.json")).part
@@ -137,9 +137,9 @@ def test_part_feature_cuts_an_imported_part():
 
 
 def test_part_cycle_is_detected(tmp_path):
-    a = {"schema": "cadgen/0.1", "name": "a", "parts": [{"file": "b.json"}]}
-    b = {"schema": "cadgen/0.1", "name": "b", "parts": [{"file": "a.json"}]}
+    a = {"schema": "cadjson/0.1", "name": "a", "parts": [{"file": "b.json"}]}
+    b = {"schema": "cadjson/0.1", "name": "b", "parts": [{"file": "a.json"}]}
     (tmp_path / "a.json").write_text(json.dumps(a))
     (tmp_path / "b.json").write_text(json.dumps(b))
-    with pytest.raises(CadgenError, match="cycle"):
+    with pytest.raises(CadjsonError, match="cycle"):
         build_document(load_document(tmp_path / "a.json"))

@@ -1,5 +1,5 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "board_profile",
   "description": "Board with a stepped tongue on the left, a groove, and a notch on the bottom right. Labels match the hand sketch; e and g were unlabelled.",
   "units": "mm",
@@ -54,7 +54,7 @@
     "drawing": {
       "views": ["front", "top", "right", "iso"], "hidden_lines": true,
       "sheet": true, "dimensions": true, "format": ["svg", "pdf"],
-      "title_block": { "number": "CG-001", "drawn_by": "cadgen", "material": "PLA" }
+      "title_block": { "number": "CG-001", "drawn_by": "cadjson", "material": "PLA" }
     }
   }
 }

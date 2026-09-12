@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "bolt",
   "description": "M6 x 20 hex bolt with a real ISO thread over the last 15 mm and a chamfered tip. Exercises the thread feature, sketches on the bottom face, and circle-edge chamfers.",
   "units": "mm",

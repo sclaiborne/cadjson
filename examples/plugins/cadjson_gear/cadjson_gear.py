@@ -1,6 +1,6 @@
-"""Example cadgen plugin: a `gear` feature (straight-sided spur gear, good enough for prints).
+"""Example cadjson plugin: a `gear` feature (straight-sided spur gear, good enough for prints).
 
-Install it (`pip install -e examples/plugins/cadgen_gear`) or point CADGEN_PLUGINS at it while
+Install it (`pip install -e examples/plugins/cadjson_gear`) or point CADJSON_PLUGINS at it while
 developing, then write:
 
     { "id": "g", "type": "gear", "teeth": 20, "module": 2, "thickness": 6, "bore": 5 }
@@ -14,7 +14,7 @@ from typing import Literal
 from build123d import Circle, Location, Polygon
 from pydantic import Field
 
-from cadgen.schema import Dim, FeatureBase, Op, PlaneRef
+from cadjson.schema import Dim, FeatureBase, Op, PlaneRef
 
 
 class Gear(FeatureBase):

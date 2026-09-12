@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "hook",
   "description": "Bent rod: a round profile swept along an open path with a straight, an arc and another straight. Exercises sweep with an open path on the XZ plane.",
   "units": "mm",

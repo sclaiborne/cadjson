@@ -1,6 +1,6 @@
 {
-  "$schema": "../schema/cadgen-0.1.schema.json",
-  "schema": "cadgen/0.1",
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
   "name": "knob",
   "description": "Round knob: revolved profile with an arc, hex socket cut from the top, one grip groove patterned six times. Exercises path arcs, revolve about an explicit axis, polygon cuts on a face plane, and feature-level polar patterns.",
   "units": "mm",

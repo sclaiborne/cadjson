@@ -98,8 +98,8 @@ part.json  --validate-->  feature IR  --build123d-->  B-rep solid
 
 - Language: Python 3.12, build123d engine, Pydantic models for the schema (one source for
   validation, JSON Schema export, and generated docs).
-- CLI: `cadgen build part.json --step --stl --views top,front,side,iso --png`,
-  `cadgen validate`, `cadgen schema`, `cadgen docs`.
+- CLI: `cadjson build part.json --step --stl --views top,front,side,iso --png`,
+  `cadjson validate`, `cadjson schema`, `cadjson docs`.
 - Error messages written for an LLM to act on: which feature id failed, why (for example
   "fillet radius 3 too large on edges selected by ... ; max feasible 2.4"), and the state
   of the model before that feature.
@@ -110,7 +110,7 @@ part.json  --validate-->  feature IR  --build123d-->  B-rep solid
 
 ```jsonc
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "units": "mm",
   "params": { "w": 60, "h": 40, "t": 10, "hole_d": 5 },
   "features": [
@@ -181,8 +181,8 @@ Open design points:
 | Question | Decision |
 |---|---|
 | Fusion feature history | Wanted eventually. STEP body for the MVP; JSON-to-Fusion-API exporter later. This rules out "AI writes Python" as the stored format, because a feature tree is needed to regenerate a timeline. |
-| Who writes the files | Mostly AI, but Scott wants to read, understand, and edit. Readability is a hard requirement. |
-| Parameters / expressions | Revised 2026-09-12: an optional `params` block with names and tiny arithmetic is in v1 after all. Scott's real requirement is that the labelled sketch dimensions (L, D, h, b, x, y) are the values in the file and are easy to change; point coordinates are not intuitive. Names in one block plus feature fields that reference them is the cheapest way to get that. Literal numbers remain valid everywhere. |
+| Who writes the files | Mostly AI, but The owner wants to read, understand, and edit. Readability is a hard requirement. |
+| Parameters / expressions | Revised 2026-09-12: an optional `params` block with names and tiny arithmetic is in v1 after all. The real requirement is that the labelled sketch dimensions (L, D, h, b, x, y) are the values in the file and are easy to change; point coordinates are not intuitive. Names in one block plus feature fields that reference them is the cheapest way to get that. Literal numbers remain valid everywhere. |
 | Assemblies | Single parts in Phase 1. |
 | Drawings | Dimensions must be an option. AGPL dependency (draftwright) is acceptable. |
 | Language | Python + build123d (no objection raised to Python). |
@@ -195,12 +195,12 @@ cuts so each sketch label appears exactly once (`examples/board_profile.json`). 
 Full draft in `docs/schema-v0.md`.
 
 Escape route if JSON is abandoned: the interpreter will be written as a Python builder API
-(one function per feature type) that the JSON merely calls. If Scott switches to scripts,
+(one function per feature type) that the JSON merely calls. If the project switches to scripts,
 that API becomes the script format and nothing is thrown away.
 
 ## 8. Phase 0 status
 
-- [x] git repo, package skeleton (`cadgen/`, `pyproject.toml`, stub CLI), venv
+- [x] git repo, package skeleton (`cadjson/`, `pyproject.toml`, stub CLI), venv
 - [x] schema v0 draft: `docs/schema-v0.md`
 - [x] example parts: board_profile (two styles), board_profile_filleted, l_bracket, spacer, enclosure
 - [x] schema open questions: rect + cuts for examples (decided); the rest defaulted as documented
@@ -208,15 +208,15 @@ that API becomes the script format and nothing is thrown away.
 
 ## 9. Phase 1 status
 
-- [x] Pydantic schema (`cadgen/schema.py`), `cadgen schema` prints JSON Schema
-- [x] expression evaluator with params (`cadgen/expr.py`)
-- [x] planes: named, offset, face, explicit (`cadgen/planes.py`)
+- [x] Pydantic schema (`cadjson/schema.py`), `cadjson schema` prints JSON Schema
+- [x] expression evaluator with params (`cadjson/expr.py`)
+- [x] planes: named, offset, face, explicit (`cadjson/planes.py`)
 - [x] sketches: rect, circle, slot, polygon, points, path; add/subtract; linear/polar/grid patterns
 - [x] features: extrude, revolve, fillet, chamfer, shell, hole, mirror, feature-level pattern
 - [x] selectors with feature tracking (`of`), convex/concave, and candidate listings on failure
 - [x] outputs: STEP, STL, 3MF, hidden-line SVG/DXF views, PNG previews
 - [x] CLI: validate, build, info, schema; all six examples build; 28 tests
-- [ ] `cadgen export --python` (emit the equivalent build123d script)
+- [ ] `cadjson export --python` (emit the equivalent build123d script)
 - [ ] auto line weight / scale for small parts in SVG views
 - [ ] more example parts from real use, to shake out selector ergonomics
 
@@ -230,7 +230,7 @@ that API becomes the script format and nothing is thrown away.
 - [x] 32 tests; all examples build with sheets and sections
 
 Costs accepted: draftwright is AGPL-3 and pins build123d to 0.10 on Python 3.12 (0.11 only on
-Python 3.13+). All cadgen tests pass on 0.10. Moving the venv to Python 3.13 lifts the pin.
+Python 3.13+). All cadjson tests pass on 0.10. Moving the venv to Python 3.13 lifts the pin.
 
 Known gaps: sheet dimensions are automatic only (no way to say "dimension L here"); sections
 are separate files rather than placed on the sheet; no hatching, grey fill instead; draftwright
@@ -238,7 +238,7 @@ takes 3 to 5 s per sheet.
 
 ## 11. Phase 3 status (2026-09-12)
 
-- [x] `cadgen export-fusion part.json` writes `out/<name>_fusion/` (script + manifest)
+- [x] `cadjson export-fusion part.json` writes `out/<name>_fusion/` (script + manifest)
 - [x] user parameters with expressions and inferred units (mm vs unitless)
 - [x] sketches on named, offset, face and explicit planes; profiles matched by area + centroid
 - [x] extrude, revolve, fillet, chamfer, shell, hole (simple/counterbore/countersink), mirror,
@@ -253,13 +253,13 @@ See `docs/fusion-export.md`.
 
 ## 12. Phase 4 status (2026-09-12)
 
-- [x] Claude Code skill `.claude/skills/cadgen/SKILL.md`: workflow (validate, build, read
+- [x] Claude Code skill `.claude/skills/cadjson/SKILL.md`: workflow (validate, build, read
       report.json, look at the PNGs), one-page format reference, recipes, gotchas
-- [x] JSON Schema committed at `schema/cadgen-0.1.schema.json` (`cadgen schema -o`), test keeps
+- [x] JSON Schema committed at `schema/cadjson-0.1.schema.json` (`cadjson schema -o`), test keeps
       it current; parts may carry `"$schema"` for editor validation
 - [x] `out/<name>/report.json` on every build: volume, bbox, params, per-feature timings, files
-- [x] `cadgen info --json`
-- [x] `cadgen export-python`: standalone build123d script; tested to rebuild every example to
+- [x] `cadjson info --json`
+- [x] `cadjson export-python`: standalone build123d script; tested to rebuild every example to
       the same volume
 - [x] regression corpus grown to 9 examples (knob: revolve with arc + polar feature pattern;
       plate_inch: inch units + countersinks; hex_standoff: blind and counterbored holes from
@@ -269,7 +269,7 @@ See `docs/fusion-export.md`.
 ## 13. Phase 5 status (2026-09-12)
 
 - [x] standard threads: `hole` accepts `standard` + `fit` (ISO metric coarse/fine, UNC/UNF tap
-      and clearance sizes, `cadgen/standards.py`); `thread` feature makes real ISO thread
+      and clearance sizes, `cadjson/standards.py`); `thread` feature makes real ISO thread
       geometry via bd_warehouse 0.2 (external on a shank, internal in a hole)
 - [x] `text` sketch shape (emboss or engrave)
 - [x] `loft` and `sweep` features (sweep uses the round transition; the default one is wrong)
@@ -285,8 +285,8 @@ See `docs/fusion-export.md`.
 
 - [x] `extends` / `drop`: variants inherit a base part (params merge, features replace by id or
       append, relative refs rebased, chains, cycle detection); `report.json` lists the chain
-- [x] plugin registry: feature types from `cadgen.plugins` entry points or `CADGEN_PLUGINS`;
-      dynamic Document model; `cadgen plugins`; `cadgen schema --with-plugins`; FeatureAPI
-- [x] example plugin `examples/plugins/cadgen_gear`; example variant `board_profile_long`
+- [x] plugin registry: feature types from `cadjson.plugins` entry points or `CADJSON_PLUGINS`;
+      dynamic Document model; `cadjson plugins`; `cadjson schema --with-plugins`; FeatureAPI
+- [x] example plugin `examples/plugins/cadjson_gear`; example variant `board_profile_long`
 - [ ] pluggable sketch shapes and selectors
-- [ ] `cadgen compare` reference in variants; `cadgen init` for a parts repo; `revision` field
+- [ ] `cadjson compare` reference in variants; `cadjson init` for a parts repo; `revision` field

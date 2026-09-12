@@ -8,11 +8,11 @@ from pathlib import Path
 
 import click
 
-from cadgen import SCHEMA_VERSION, __version__
-from cadgen.errors import CadgenError
+from cadjson import SCHEMA_VERSION, __version__
+from cadjson.errors import CadjsonError
 
 
-def _fail(exc: CadgenError) -> None:
+def _fail(exc: CadjsonError) -> None:
     click.secho("error: " + exc.format(), fg="red", err=True)
     sys.exit(1)
 
@@ -20,15 +20,15 @@ def _fail(exc: CadgenError) -> None:
 @click.group()
 @click.version_option(__version__)
 def main() -> None:
-    """cadgen: build CAD files from a JSON feature tree."""
+    """cadjson: build CAD files from a JSON feature tree."""
 
 
 @main.command()
 @click.argument("parts", nargs=-1, required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def validate(parts: tuple[Path, ...]) -> None:
     """Check PARTS against the schema and resolve their params (no geometry)."""
-    from cadgen.build import load_document
-    from cadgen.context import Context
+    from cadjson.build import load_document
+    from cadjson.context import Context
 
     ok = True
     for path in parts:
@@ -36,7 +36,7 @@ def validate(parts: tuple[Path, ...]) -> None:
             doc = load_document(path)
             ctx = Context(doc.params, doc.units)
             click.echo(f"{path}: ok ({len(doc.features)} features, {len(ctx.params)} params)")
-        except CadgenError as exc:
+        except CadjsonError as exc:
             ok = False
             click.secho(f"{path}: " + exc.format(), fg="red", err=True)
     sys.exit(0 if ok else 1)
@@ -54,7 +54,7 @@ def validate(parts: tuple[Path, ...]) -> None:
 @click.option("--flat", is_flag=True, help="write into OUT directly instead of OUT/<name>/")
 def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
     """Build PARTS: run the feature tree and write the requested outputs."""
-    from cadgen.build import build_document, load_document, write_outputs
+    from cadjson.build import build_document, load_document, write_outputs
 
     view_list = [v.strip() for v in views.split(",") if v.strip()] if views else None
     failed = 0
@@ -67,7 +67,7 @@ def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
             click.echo(result.summary())
             for f in files:
                 click.echo(f"  wrote {f}")
-        except CadgenError as exc:
+        except CadjsonError as exc:
             failed += 1
             click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)
     sys.exit(1 if failed else 0)
@@ -79,8 +79,8 @@ def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
               help="output directory; <name>_fusion/ is created inside it")
 def export_fusion_cmd(parts, out_dir: Path) -> None:
     """Write a Fusion 360 script that rebuilds PARTS with a native parametric timeline."""
-    from cadgen.build import load_document
-    from cadgen.fusion import export_fusion
+    from cadjson.build import load_document
+    from cadjson.fusion import export_fusion
 
     failed = 0
     for path in parts:
@@ -90,7 +90,7 @@ def export_fusion_cmd(parts, out_dir: Path) -> None:
             for f in files:
                 click.echo(f"  wrote {f}")
             click.echo(f"{doc.name}: in Fusion, Utilities > Add-Ins > Scripts > + and pick the folder {files[0].parent}")
-        except CadgenError as exc:
+        except CadjsonError as exc:
             failed += 1
             click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)
     sys.exit(1 if failed else 0)
@@ -102,12 +102,12 @@ def export_fusion_cmd(parts, out_dir: Path) -> None:
 @click.option("--samples", default=20000, show_default=True, help="surface sample points each way")
 def compare(part: Path, reference: Path, samples: int) -> None:
     """Build PART and compare it with a REFERENCE mesh (STL/3MF/OBJ): volume, bbox, surface distance."""
-    from cadgen.build import build_document, load_document
-    from cadgen.compare import compare as run_compare
+    from cadjson.build import build_document, load_document
+    from cadjson.compare import compare as run_compare
 
     try:
         result = build_document(load_document(part))
-    except CadgenError as exc:
+    except CadjsonError as exc:
         _fail(exc)
     click.echo(run_compare(result.part, reference, samples=samples).summary())
 
@@ -117,15 +117,15 @@ def compare(part: Path, reference: Path, samples: int) -> None:
 @click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True)
 def export_python_cmd(parts, out_dir: Path) -> None:
     """Write a standalone build123d script equivalent to building PARTS."""
-    from cadgen.build import load_document
-    from cadgen.pyexport import export_python
+    from cadjson.build import load_document
+    from cadjson.pyexport import export_python
 
     failed = 0
     for path in parts:
         try:
             doc = load_document(path)
             click.echo(f"  wrote {export_python(doc, out_dir / doc.name)}")
-        except CadgenError as exc:
+        except CadjsonError as exc:
             failed += 1
             click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)
     sys.exit(1 if failed else 0)
@@ -133,25 +133,25 @@ def export_python_cmd(parts, out_dir: Path) -> None:
 
 @main.command()
 @click.argument("target", type=click.Path(path_type=Path), default=Path("."))
-@click.option("--update", is_flag=True, help="refresh the skill and the cadgen pin in an existing repo")
+@click.option("--update", is_flag=True, help="refresh the skill and the cadjson pin in an existing repo")
 @click.option("--name", default=None, help="project name for README and CLAUDE.md (default: folder name)")
 def init(target: Path, update: bool, name: str | None) -> None:
     """Scaffold a parts repository: Claude skill, .gitignore, README, requirements pin, parts/."""
-    from cadgen.init import init_repo
+    from cadjson.init import init_repo
 
     for path in init_repo(target, update=update, name=name):
         click.echo(f"  wrote {path}")
-    click.echo(f"ready: {target.resolve()}  (cadgen {__version__} skill installed in .claude/skills/cadgen)")
+    click.echo(f"ready: {target.resolve()}  (cadjson {__version__} skill installed in .claude/skills/cadjson)")
 
 
 @main.command()
 def plugins() -> None:
-    """List plugin feature types found through entry points or CADGEN_PLUGINS."""
-    from cadgen.plugins import registry
+    """List plugin feature types found through entry points or CADJSON_PLUGINS."""
+    from cadjson.plugins import registry
 
     registry.load()
     if not registry.features and not registry.errors:
-        click.echo("no plugins found (entry-point group 'cadgen.plugins' or CADGEN_PLUGINS=module,...)")
+        click.echo("no plugins found (entry-point group 'cadjson.plugins' or CADJSON_PLUGINS=module,...)")
     for line in registry.describe():
         click.echo(f"  {line}")
     for err in registry.errors:
@@ -164,7 +164,7 @@ def plugins() -> None:
 @click.option("--with-plugins", is_flag=True, help="include plugin feature types currently loadable")
 def schema(out_path: Path | None, with_plugins: bool) -> None:
     """Print (or write) the JSON Schema for the document format."""
-    from cadgen.schema import json_schema
+    from cadjson.schema import json_schema
 
     text = json.dumps(json_schema(with_plugins=with_plugins), indent=2) + "\n"
     if out_path:
@@ -180,13 +180,13 @@ def schema(out_path: Path | None, with_plugins: bool) -> None:
 @click.option("--json", "as_json", is_flag=True, help="print a JSON report instead of text")
 def info(part: Path, as_json: bool) -> None:
     """Build PART and print its faces and edges, to help write selectors."""
-    from cadgen.build import build_document, load_document
-    from cadgen.report import build_report
-    from cadgen.selectors import _describe_edge, _describe_face
+    from cadjson.build import build_document, load_document
+    from cadjson.report import build_report
+    from cadjson.selectors import _describe_edge, _describe_face
 
     try:
         result = build_document(load_document(part))
-    except CadgenError as exc:
+    except CadjsonError as exc:
         _fail(exc)
     if as_json:
         rep = build_report(result, [])

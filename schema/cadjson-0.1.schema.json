@@ -1891,7 +1891,7 @@
           "type": "string"
         },
         "file": {
-          "description": "another cadgen part file, relative to this file",
+          "description": "another cadjson part file, relative to this file",
           "title": "File",
           "type": "string"
         },

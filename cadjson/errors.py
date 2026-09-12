@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-class CadgenError(Exception):
+class CadjsonError(Exception):
     """A user-facing error: what failed, in which feature, and hints on how to fix it."""
 
     def __init__(self, message: str, feature_id: str | None = None, hints: list[str] | None = None):

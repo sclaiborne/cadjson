@@ -1,5 +1,5 @@
 {
-  "schema": "cadgen/0.1",
+  "schema": "cadjson/0.1",
   "name": "enclosure",
   "description": "Open-top box: rounded block, shelled from the top, vent slots on one long side, mirrored to the other side. Exercises shell, linear patterns, mirror of features, and offset planes.",
   "units": "mm",
