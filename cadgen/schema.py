@@ -366,10 +366,11 @@ class PatternFeature(FeatureBase):
         return self
 
 
-Feature = Annotated[
-    Union[Extrude, Revolve, Fillet, Chamfer, Shell, Hole, Mirror, PatternFeature, Thread, Loft, Sweep, PartRef],
-    Field(discriminator="type"),
-]
+BUILTIN_FEATURES = (Extrude, Revolve, Fillet, Chamfer, Shell, Hole, Mirror, PatternFeature, Thread, Loft, Sweep, PartRef)
+BUILTIN_FEATURE_TYPES = {"extrude", "revolve", "fillet", "chamfer", "shell", "hole", "mirror", "pattern",
+                         "thread", "loft", "sweep", "part"}
+
+Feature = Annotated[Union[BUILTIN_FEATURES], Field(discriminator="type")]
 
 
 class Placement(Model):
@@ -445,6 +446,10 @@ class Document(Model):
     schema_version: str = Field(alias="schema")
     name: str = Field(pattern=r"^[A-Za-z0-9_\-]+$")
     description: str = ""
+    extends: str | None = Field(None, description="base part file (relative): inherit its params and features; "
+                                                  "this file's params override, features with a known id replace, "
+                                                  "new ids append")
+    drop: list[str] = Field([], description="with extends: ids of base features to leave out")
     units: Literal["mm", "in"] = "mm"
     params: dict[str, Dim] = {}
     parts: list[Placement] = Field([], description="assembly: other part files placed in this one")
@@ -455,7 +460,9 @@ class Document(Model):
     def _check(self):
         if self.schema_version != SCHEMA_VERSION:
             raise ValueError(f'schema must be "{SCHEMA_VERSION}", got "{self.schema_version}"')
-        if not self.features and not self.parts:
+        if self.drop and self.extends is None:
+            raise ValueError("drop needs extends")
+        if not self.features and not self.parts and self.extends is None:
             raise ValueError("a document needs at least one feature or one placed part")
         seen: set[str] = set()
         for f in self.features:
@@ -508,8 +515,14 @@ def _feature_refs(f: FeatureBase) -> list[str]:
         refs.extend(f.features or [])
     elif isinstance(f, PatternFeature):
         refs.extend(f.features)
+    elif hasattr(f, "refs"):  # plugin features may declare the ids they depend on
+        refs.extend(f.refs())
     return refs
 
 
-def json_schema() -> dict:
+def json_schema(with_plugins: bool = False) -> dict:
+    if with_plugins:
+        from cadgen.plugins import registry
+
+        return registry.document_model().model_json_schema(by_alias=True)
     return Document.model_json_schema(by_alias=True)

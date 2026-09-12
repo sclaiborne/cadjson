@@ -1,0 +1,14 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "gear_demo",
+  "description": "Uses the example gear plugin (examples/plugins/cadgen_gear). Build with CADGEN_PLUGINS=cadgen_gear and the plugin folder on PYTHONPATH, or pip install the plugin.",
+  "units": "mm",
+  "params": { "teeth": 24, "module": 2, "thick": 8, "bore": 6 },
+  "features": [
+    { "id": "gear", "type": "gear", "teeth": 24, "module": "module", "thickness": "thick", "bore": "bore" },
+    { "id": "hub", "type": "extrude", "distance": 4,
+      "sketch": { "plane": { "face": "top" }, "shapes": [
+        { "type": "circle", "d": "bore + 10" }, { "type": "circle", "d": "bore", "mode": "subtract" } ] } }
+  ],
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["top", "iso"], "hidden_lines": false } }
+}

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cadgen-gear"
+version = "0.1.0"
+description = "Example cadgen plugin: a simple spur gear feature"
+requires-python = ">=3.11"
+dependencies = ["cadgen"]
+
+# This is how cadgen finds the plugin once the package is installed.
+[project.entry-points."cadgen.plugins"]
+gear = "cadgen_gear"
+
+[tool.setuptools]
+py-modules = ["cadgen_gear"]

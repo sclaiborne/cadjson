@@ -280,3 +280,13 @@ See `docs/fusion-export.md`.
 - [x] examples: bolt, tapped_block, funnel, hook, assembly_stack
 - [ ] Fusion export of thread/loft/sweep/part/text and of assemblies (explicit error today)
 - [ ] hatching on section views; sections placed on the sheet
+
+## 14. Extending (2026-09-12)
+
+- [x] `extends` / `drop`: variants inherit a base part (params merge, features replace by id or
+      append, relative refs rebased, chains, cycle detection); `report.json` lists the chain
+- [x] plugin registry: feature types from `cadgen.plugins` entry points or `CADGEN_PLUGINS`;
+      dynamic Document model; `cadgen plugins`; `cadgen schema --with-plugins`; FeatureAPI
+- [x] example plugin `examples/plugins/cadgen_gear`; example variant `board_profile_long`
+- [ ] pluggable sketch shapes and selectors
+- [ ] `cadgen compare` reference in variants; `cadgen init` for a parts repo; `revision` field

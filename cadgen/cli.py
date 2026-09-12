@@ -132,13 +132,28 @@ def export_python_cmd(parts, out_dir: Path) -> None:
 
 
 @main.command()
+def plugins() -> None:
+    """List plugin feature types found through entry points or CADGEN_PLUGINS."""
+    from cadgen.plugins import registry
+
+    registry.load()
+    if not registry.features and not registry.errors:
+        click.echo("no plugins found (entry-point group 'cadgen.plugins' or CADGEN_PLUGINS=module,...)")
+    for line in registry.describe():
+        click.echo(f"  {line}")
+    for err in registry.errors:
+        click.secho(f"  problem: {err}", fg="red", err=True)
+
+
+@main.command()
 @click.option("-o", "--out", "out_path", type=click.Path(path_type=Path), default=None,
               help="write to this file instead of stdout")
-def schema(out_path: Path | None) -> None:
+@click.option("--with-plugins", is_flag=True, help="include plugin feature types currently loadable")
+def schema(out_path: Path | None, with_plugins: bool) -> None:
     """Print (or write) the JSON Schema for the document format."""
     from cadgen.schema import json_schema
 
-    text = json.dumps(json_schema(), indent=2) + "\n"
+    text = json.dumps(json_schema(with_plugins=with_plugins), indent=2) + "\n"
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(text, encoding="utf-8")

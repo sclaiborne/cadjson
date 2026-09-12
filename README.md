@@ -39,6 +39,13 @@ Every build also writes `out/<name>/report.json` with volume, bounding box, reso
 per-feature timings and the list of files. Add `"$schema": "../schema/cadgen-0.1.schema.json"`
 to a part for editor validation and completion.
 
+## Variants and plugins
+
+A variant file says `"extends": "base.json"` and only what differs: params, replaced or added
+features, dropped features. New feature types come from plugins registered through the
+`cadgen.plugins` entry-point group; see [docs/extending.md](docs/extending.md) and the example
+gear plugin in `examples/plugins/`.
+
 ## Working with Claude Code
 
 The project ships a skill at `.claude/skills/cadgen/SKILL.md`. In Claude Code, asking for a

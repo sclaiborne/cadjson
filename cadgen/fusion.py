@@ -311,6 +311,12 @@ class FusionExporter:
                     f"{self._angle(feat.angle)!r})"
                 )
         else:
+            from cadgen.plugins import registry
+
+            plugin = registry.plugin_for(feat)
+            if plugin is not None and plugin.fusion is not None:
+                plugin.fusion(feat, self)
+                return
             raise CadgenError(
                 f"feature type {feat.type!r} cannot be exported to Fusion yet", fid,
                 ["supported: extrude, revolve, fillet, chamfer, shell, hole, mirror, pattern"],

@@ -33,7 +33,14 @@ def build_report(result, files: list[Path], notes: list[str] | None = None) -> d
         ],
         "files": [str(p) for p in files],
         "notes": notes or [],
+        "extends": _extends_chain(doc),
     }
+
+
+def _extends_chain(doc) -> list[str]:
+    from cadgen.build import EXTENDS_CHAIN
+
+    return EXTENDS_CHAIN.get(id(doc), [])
 
 
 def result_params(result) -> dict[str, float]:

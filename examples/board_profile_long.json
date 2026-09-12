@@ -1,0 +1,25 @@
+{
+  "$schema": "../schema/cadgen-0.1.schema.json",
+  "schema": "cadgen/0.1",
+  "name": "board_profile_long",
+  "description": "A variant of board_profile: 150 mm long, thicker, with two mounting holes added. Everything else is inherited from board_profile.json through extends.",
+  "extends": "board_profile.json",
+
+  "params": {
+    "L": 150,
+    "D": 130,
+    "h": 24,
+    "mount_d": 4.5,
+    "mount_inset": 30
+  },
+
+  "features": [
+    {
+      "id": "mount_holes",
+      "type": "hole", "face": "top", "diameter": "mount_d", "through": true,
+      "at": [["-(L / 2 - mount_inset)", 0], ["L / 2 - mount_inset", 0]]
+    }
+  ],
+
+  "outputs": { "step": true, "stl": true, "drawing": { "views": ["front", "top", "iso"], "hidden_lines": true } }
+}

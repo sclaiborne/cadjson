@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,17 +38,96 @@ from cadgen.selectors import Selection
 from cadgen.sketch import build_sketch, open_path_wire
 
 SOURCE_PATHS: dict[int, Path] = {}  # id(document) -> file it was loaded from (for relative part refs)
+EXTENDS_CHAIN: dict[int, list[str]] = {}  # id(document) -> base files it was merged from
 
 
 def load_document(path: Path | str) -> Document:
     path = Path(path)
+    raw, chain = load_raw(path)
+    doc = parse_document(raw, source=str(path))
+    SOURCE_PATHS[id(doc)] = path.resolve()
+    EXTENDS_CHAIN[id(doc)] = chain
+    return doc
+
+
+def _read_json(path: Path) -> dict:
+    if not path.exists():
+        raise CadgenError(f"file not found: {path}")
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise CadgenError(f"{path}: not valid JSON: {exc}") from None
-    doc = parse_document(raw, source=str(path))
-    SOURCE_PATHS[id(doc)] = path.resolve()
-    return doc
+    if not isinstance(raw, dict):
+        raise CadgenError(f"{path}: the document must be a JSON object")
+    return raw
+
+
+_REL_KEYS = ("file", "font_path")
+
+
+def _rebase_refs(node, base_dir: Path, child_dir: Path):
+    """Rewrite relative file references in a base document so they resolve from the child's folder."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k in _REL_KEYS and isinstance(v, str) and not Path(v).is_absolute():
+                node[k] = os.path.relpath((base_dir / v).resolve(), child_dir.resolve()).replace("\\", "/")
+            else:
+                _rebase_refs(v, base_dir, child_dir)
+    elif isinstance(node, list):
+        for v in node:
+            _rebase_refs(v, base_dir, child_dir)
+
+
+def load_raw(path: Path, stack: tuple[Path, ...] = ()) -> tuple[dict, list[str]]:
+    """Raw document dict with `extends` resolved (merged), plus the chain of base files used."""
+    path = path.resolve()
+    if path in stack:
+        raise CadgenError("extends forms a cycle: " + " -> ".join(str(p) for p in stack + (path,)))
+    raw = _read_json(path)
+    ext = raw.get("extends")
+    if ext is None:
+        return raw, []
+    if not isinstance(ext, str):
+        raise CadgenError(f"{path}: extends must be a file path string")
+    base_path = (path.parent / ext).resolve()
+    base, chain = load_raw(base_path, stack + (path,))
+    _rebase_refs(base, base_path.parent, path.parent)
+    merged = merge_documents(base, raw, source=str(path))
+    return merged, [str(base_path)] + chain
+
+
+def merge_documents(base: dict, child: dict, source: str = "document") -> dict:
+    """Apply a child document on top of its base (both raw dicts). See docs/extending.md."""
+    merged = dict(base)
+    for key in ("$schema", "schema", "name", "description", "units", "outputs"):
+        if key in child:
+            merged[key] = child[key]
+    if "units" in base and "units" in child and base["units"] != child["units"]:
+        raise CadgenError(f"{source}: units {child['units']!r} differ from the base's {base['units']!r}")
+    merged["params"] = {**base.get("params", {}), **child.get("params", {})}
+    merged["parts"] = list(base.get("parts", [])) + list(child.get("parts", []))
+
+    features = [dict(f) for f in base.get("features", [])]
+    ids = {f.get("id"): i for i, f in enumerate(features)}
+    drop = child.get("drop", [])
+    if not isinstance(drop, list):
+        raise CadgenError(f"{source}: drop must be a list of feature ids")
+    for fid in drop:
+        if fid not in ids:
+            raise CadgenError(f"{source}: drop names {fid!r}, which is not a feature of the base",
+                              hints=[f"base features: {', '.join(ids)}"])
+    features = [f for f in features if f.get("id") not in drop]
+    ids = {f.get("id"): i for i, f in enumerate(features)}
+    for f in child.get("features", []):
+        fid = f.get("id") if isinstance(f, dict) else None
+        if fid in ids:
+            features[ids[fid]] = f  # replace in place, keeping the base's ordering
+        else:
+            features.append(f)
+    merged["features"] = features
+    merged.pop("extends", None)
+    merged.pop("drop", None)
+    return merged
 
 
 def source_dir(doc: Document) -> Path:
@@ -98,13 +178,20 @@ def _transform(shape: Part, at: Vector, rotate) -> Part:
 
 
 def parse_document(raw: dict, source: str = "document") -> Document:
+    from cadgen.plugins import registry
+
+    model = registry.document_model()
     try:
-        return Document.model_validate(raw)
+        return model.model_validate(raw)
     except ValidationError as exc:
         hints = []
         for err in exc.errors():
             loc = ".".join(str(p) for p in err["loc"]) or "(root)"
             hints.append(f"{loc}: {err['msg']}")
+        if registry.features:
+            hints.append("plugin feature types available: " + ", ".join(registry.features))
+        if registry.errors:
+            hints.append("plugin problems: " + "; ".join(registry.errors))
         raise CadgenError(f"{source} does not match schema ({len(hints)} problem(s))", hints=hints) from None
 
 
@@ -162,18 +249,74 @@ def build_document(doc: Document, imports: _Imports | None = None) -> BuildResul
     return BuildResult(doc, shape, builder, timings)
 
 
+class FeatureAPI:
+    """What a feature implementation (built-in or plugin) needs from the build context."""
+
+    def __init__(self, feat, ctx: Context, builder: Builder):
+        self.feature = feat
+        self.fid = feat.id
+        self.ctx = ctx
+        self.builder = builder
+
+    # dims
+    def length(self, dim) -> float:
+        return self.ctx.length(dim)
+
+    def num(self, dim) -> float:
+        return self.ctx.num(dim)
+
+    def vec2(self, v):
+        return self.ctx.vec2(v)
+
+    def vec3(self, v):
+        return self.ctx.vec3(v)
+
+    # geometry
+    def selection(self) -> Selection:
+        solid = self.builder.require_solid(self.fid, "select geometry")
+        return Selection(solid, self.ctx, self.builder.new_faces, self.builder.new_edges)
+
+    def faces(self, sel):
+        return self.selection().faces(sel)
+
+    def edges(self, sel):
+        return self.selection().edges(sel)
+
+    def plane(self, ref):
+        return resolve_plane(ref, self.ctx, self.faces)
+
+    def sketch(self, model):
+        """A 2D build123d Sketch in plane-local coordinates from a Sketch model."""
+        return build_sketch(model, self.ctx)
+
+    def located_sketch(self, model):
+        return self.plane(model.plane) * build_sketch(model, self.ctx)
+
+    # solids
+    def extrude(self, sketch, plane, *, distance=None, through=False, both=False, taper=0.0, op="add"):
+        return self.builder.extrude(self.fid, sketch, plane, distance=distance, through=through, both=both,
+                                    taper=taper, op=op)
+
+    def combine(self, tool, op: str = "add"):
+        """Combine a ready-made build123d solid with the body (add / cut / intersect)."""
+        return self.builder.place(self.fid, tool, op)
+
+    def error(self, message: str, hints: list[str] | None = None) -> CadgenError:
+        return CadgenError(message, self.fid, hints)
+
+
 def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None) -> None:
     fid = feat.id
+    api = FeatureAPI(feat, ctx, b)
 
     def selection() -> Selection:
-        solid = b.require_solid(fid, "select geometry")
-        return Selection(solid, ctx, b.new_faces, b.new_edges)
+        return api.selection()
 
     def faces(sel):
-        return selection().faces(sel)
+        return api.faces(sel)
 
     def plane_of(ref):
-        return resolve_plane(ref, ctx, faces)
+        return api.plane(ref)
 
     if isinstance(feat, Extrude):
         plane = plane_of(feat.sketch.plane)
@@ -263,7 +406,19 @@ def _run_feature(feat, ctx: Context, b: Builder, imports: _Imports | None = None
                 transforms.append(lambda shape, a=step * i, ax=axis: shape.rotate(ax, a))
         b.pattern(fid, feat.features, transforms)
     else:
-        raise CadgenError(f"unsupported feature type {feat.type!r}", fid)
+        from cadgen.plugins import registry
+
+        plugin = registry.plugin_for(feat)
+        if plugin is None:
+            raise CadgenError(f"unsupported feature type {feat.type!r}", fid)
+        try:
+            plugin.build(feat, api)
+        except CadgenError:
+            raise
+        except Exception as exc:
+            raise CadgenError(f"plugin feature {feat.type!r} failed: {type(exc).__name__}: {exc}", fid) from None
+        if fid not in b.records:
+            raise CadgenError(f"plugin feature {feat.type!r} did not produce geometry (call api.extrude or api.combine)", fid)
 
 
 def _face_plane_ref(face_sel):

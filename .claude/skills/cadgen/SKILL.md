@@ -60,6 +60,10 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
   length, near), `loft` (sections), `sweep` (profile, path), `part` (file, op, at, rotate, params).
 - **Assemblies**: a top-level `parts` list places other part files (`file`, `at`, `rotate`,
   `params` overrides); they stay separate solids in the STEP.
+- **Variants**: `"extends": "base.json"` inherits a part; override `params`, replace features by
+  id, append new ones, `drop` unwanted ones (docs/extending.md). Prefer a variant over copying.
+- **Plugins**: extra feature types from installed plugins show up in `cadgen plugins` and in
+  schema errors; `CADGEN_PLUGINS=module` loads one from the path.
 - **Text**: a `text` sketch shape (text, size, center); cut with a negative distance to engrave.
 - **Selectors** (all filters AND together; never indices):
   faces: `of`, `normal` `"+Z"`, `geom`, `nth` + `sort_by`, `near`, `area`; shortcuts `"top"`,

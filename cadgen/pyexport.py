@@ -292,7 +292,12 @@ class PythonExporter:
                     self.emit(f"for i in range(1, {n}):")
                     self.emit(f"    part = _apply(part, D[{ref!r}], lambda s, i=i: s.rotate(Axis({_v(origin)}, {_v(direction)}), {_n(step)} * i))")
         else:
-            raise CadgenError(f"cannot export feature type {feat.type!r}", fid)
+            from cadgen.plugins import registry
+
+            plugin = registry.plugin_for(feat)
+            if plugin is None or plugin.python is None:
+                raise CadgenError(f"cannot export feature type {feat.type!r} to a script", fid)
+            plugin.python(feat, self)
         if fid in self.tracked:
             self.emit(f"D[{fid!r}] = _delta(_before, part)")
         self.emit()

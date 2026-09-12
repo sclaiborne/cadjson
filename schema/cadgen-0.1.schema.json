@@ -4109,6 +4109,28 @@
       "title": "Description",
       "type": "string"
     },
+    "extends": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "base part file (relative): inherit its params and features; this file's params override, features with a known id replace, new ids append",
+      "title": "Extends"
+    },
+    "drop": {
+      "default": [],
+      "description": "with extends: ids of base features to leave out",
+      "items": {
+        "type": "string"
+      },
+      "title": "Drop",
+      "type": "array"
+    },
     "units": {
       "default": "mm",
       "enum": [
