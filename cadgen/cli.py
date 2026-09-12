@@ -132,6 +132,19 @@ def export_python_cmd(parts, out_dir: Path) -> None:
 
 
 @main.command()
+@click.argument("target", type=click.Path(path_type=Path), default=Path("."))
+@click.option("--update", is_flag=True, help="refresh the skill and the cadgen pin in an existing repo")
+@click.option("--name", default=None, help="project name for README and CLAUDE.md (default: folder name)")
+def init(target: Path, update: bool, name: str | None) -> None:
+    """Scaffold a parts repository: Claude skill, .gitignore, README, requirements pin, parts/."""
+    from cadgen.init import init_repo
+
+    for path in init_repo(target, update=update, name=name):
+        click.echo(f"  wrote {path}")
+    click.echo(f"ready: {target.resolve()}  (cadgen {__version__} skill installed in .claude/skills/cadgen)")
+
+
+@main.command()
 def plugins() -> None:
     """List plugin feature types found through entry points or CADGEN_PLUGINS."""
     from cadgen.plugins import registry

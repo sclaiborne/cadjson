@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cadgen"
-version = "0.0.1"
+version = "0.1.0"
 description = "JSON feature-tree to CAD (STEP, STL, 2D drawings) via build123d"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,6 +29,9 @@ dev = [
 
 [project.scripts]
 cadgen = "cadgen.cli:main"
+
+[tool.setuptools.package-data]
+cadgen = ["skill/SKILL.md"]
 
 [tool.setuptools.packages.find]
 include = ["cadgen*"]
