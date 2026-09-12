@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cadgen"
-version = "0.1.0"
+version = "0.1.1"
 description = "JSON feature-tree to CAD (STEP, STL, 2D drawings) via build123d"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -18,13 +18,14 @@ dependencies = [
     "draftwright>=0.4.28",
     # threads; 0.3 requires build123d 0.11.1 which draftwright forbids on Python < 3.13
     "bd_warehouse>=0.2,<0.3",
+    # cadgen compare (mesh distance against a reference STL)
+    "trimesh>=4",
+    "rtree>=1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
-    "trimesh>=4",
-    "rtree>=1",
 ]
 
 [project.scripts]
