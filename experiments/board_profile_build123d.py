@@ -19,11 +19,12 @@ with BuildPart() as p:
 
 part = p.part
 print("valid", part.is_valid, "volume", round(part.volume, 1))
-export_step(part, "board.step"); export_stl(part, "board.stl")
+import os; os.makedirs("out", exist_ok=True)
+export_step(part, "out/board.step"); export_stl(part, "out/board.stl")
 for name, vp, up in [("front", (0, -1, 0), (0, 0, 1)), ("iso", (1, -1, 1), (0, 0, 1))]:
     c = part.center(); vis, hid = part.project_to_viewport(viewport_origin=c + Vector(*vp) * 1000, viewport_up=up, look_at=c)
     ex = ExportSVG(scale=3); ex.add_layer("vis", line_weight=0.5)
     ex.add_layer("hid", line_weight=0.25, line_type=LineType.HIDDEN)
-    ex.add_shape(vis, layer="vis"); ex.add_shape(hid, layer="hid"); ex.write(f"board_{name}.svg")
-    s = re.sub(r'(width|height)="([\d.]+)mm"', r'\1="\2"', open(f"board_{name}.svg").read(), count=2)
-    open(f"board_{name}.png", "wb").write(bytes(resvg_py.svg_to_bytes(svg_string=s, width=600, background="white")))
+    ex.add_shape(vis, layer="vis"); ex.add_shape(hid, layer="hid"); ex.write(f"out/board_{name}.svg")
+    s = re.sub(r'(width|height)="([\d.]+)mm"', r'\1="\2"', open(f"out/board_{name}.svg").read(), count=2)
+    open(f"out/board_{name}.png", "wb").write(bytes(resvg_py.svg_to_bytes(svg_string=s, width=600, background="white")))
