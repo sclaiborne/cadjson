@@ -202,6 +202,6 @@ that API becomes the script format and nothing is thrown away.
 
 - [x] git repo, package skeleton (`cadgen/`, `pyproject.toml`, stub CLI), venv
 - [x] schema v0 draft: `docs/schema-v0.md`
-- [x] example parts: board_profile (two styles), l_bracket, spacer, enclosure
+- [x] example parts: board_profile (two styles), board_profile_filleted, l_bracket, spacer, enclosure
 - [ ] review schema open questions (section 10 of the schema doc) and freeze v0
 - [ ] Phase 1 starts: Pydantic models for the schema, expression evaluator, build123d backend

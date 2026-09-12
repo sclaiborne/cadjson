@@ -1,0 +1,68 @@
+{
+  "schema": "cadgen/0.1",
+  "name": "board_profile_filleted",
+  "description": "board_profile with softened edges: outer (convex) corners of the body get a larger radius than the inner (concave) corners of the groove and notch.",
+  "units": "mm",
+
+  "params": {
+    "L": 100,
+    "D": 80,
+    "h": 20,
+    "b": 4,
+    "x": 12,
+    "y": 6,
+    "e": 8,
+    "g": "L - D - x",
+    "depth": 40,
+    "outer_r": 2,
+    "inner_r": 1
+  },
+
+  "features": [
+    {
+      "id": "body",
+      "type": "extrude",
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "L", "h": "h", "corner": [0, 0] }
+      ] },
+      "distance": "depth"
+    },
+    {
+      "id": "tongue_step",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "x", "h": "b", "top_left": [0, "h"] }
+      ] }
+    },
+    {
+      "id": "groove",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "g", "h": "h - y", "top_left": ["x", "h"] }
+      ] }
+    },
+    {
+      "id": "notch",
+      "type": "extrude", "op": "cut", "through": true,
+      "sketch": { "plane": "XZ", "shapes": [
+        { "type": "rect", "w": "g", "h": "y", "bottom_right": ["L - e", 0] }
+      ] }
+    },
+    {
+      "id": "outer_corners",
+      "type": "fillet", "radius": "outer_r",
+      "edges": { "parallel_to": "Y", "convex": true }
+    },
+    {
+      "id": "inner_corners",
+      "type": "fillet", "radius": "inner_r",
+      "edges": { "parallel_to": "Y", "convex": false }
+    }
+  ],
+
+  "outputs": {
+    "step": true,
+    "stl": { "tolerance": 0.01 },
+    "drawing": { "views": ["front", "top", "right", "iso"], "hidden_lines": true, "dimensions": true }
+  }
+}

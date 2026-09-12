@@ -221,6 +221,7 @@ Edge selector fields:
 | `of` | feature id |
 | `of_face` | face selector: edges bounding those faces |
 | `parallel_to` | `"X"`, `"Y"`, `"Z"`: straight edges along that axis |
+| `convex` | `true`: outer corners (material angle < 180°); `false`: inner corners. Lets "round the body more than the grooves" be two fillet features with no coordinates. |
 | `geom` | `"line"`, `"circle"`, `"arc"`, `"ellipse"`, `"spline"` |
 | `radius`, `length` | `{ "min": .., "max": .. }` |
 | `near` | `[x, y, z]`: the single edge whose centre is closest |
@@ -261,8 +262,8 @@ to a person or an LLM.
 
 ## 10. Open questions for review
 
-1. `path` versus `rect` + cuts for prismatic profiles: `examples/board_profile.json` and
-   `examples/board_profile_path.json` show both. Which reads better to you?
+1. Decided 2026-09-12: examples use `rect` + cuts; `path` stays in the schema as an
+   alternative for profiles that are not rectangular. Both remain supported.
 2. Are the corner keywords (`top_left`, `bottom_right`, ...) enough, or do you want
    `"anchor": "top_left"` plus `"at"`?
 3. Should `through` be the default for cuts sketched on a face?
