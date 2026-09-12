@@ -70,6 +70,32 @@ def test_tapped_block_thread_and_text():
     assert any(e.geom_type.name in ("BSPLINE", "BEZIER") for e in part.edges())
 
 
+def test_text_font_path(tmp_path):
+    font = Path("C:/Windows/Fonts/verdanab.ttf")
+    if not font.exists():
+        pytest.skip("Verdana Bold not installed")
+    doc = {
+        "schema": "cadgen/0.1", "name": "t",
+        "features": [
+            {"id": "plate", "type": "extrude", "distance": 2,
+             "sketch": {"plane": "XY", "shapes": [{"type": "rect", "w": 80, "h": 30}]}},
+            {"id": "label", "type": "extrude", "distance": 1,
+             "sketch": {"plane": {"face": "top"}, "shapes": [
+                 {"type": "text", "text": "abc", "size": 12, "font_path": "verdanab.ttf"}]}},
+        ],
+    }
+    (tmp_path / "t.json").write_text(json.dumps(doc))
+    (tmp_path / "verdanab.ttf").write_bytes(font.read_bytes())
+    part = build_document(load_document(tmp_path / "t.json")).part
+    assert part.volume > 80 * 30 * 2
+    bad = dict(doc)
+    bad["features"] = [doc["features"][0], {**doc["features"][1], "sketch": {"plane": {"face": "top"}, "shapes": [
+        {"type": "text", "text": "abc", "size": 12, "font_path": "missing.ttf"}]}}]
+    (tmp_path / "bad.json").write_text(json.dumps(bad))
+    with pytest.raises(CadgenError, match="font file not found"):
+        build_document(load_document(tmp_path / "bad.json"))
+
+
 def test_funnel_and_hook_volumes():
     funnel = build_document(load_document(EXAMPLES / "funnel.json")).part
     assert funnel.is_valid and 0 < funnel.volume < math.pi * 25**2 * 40

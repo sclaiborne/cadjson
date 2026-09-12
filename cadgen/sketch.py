@@ -99,7 +99,17 @@ def _points(shape: PointsShape, ctx: Context) -> B3dSketch:
 def _text(shape: TextShape, ctx: Context) -> B3dSketch:
     cx, cy = ctx.vec2(shape.center)
     style = FontStyle.BOLD if shape.bold else FontStyle.REGULAR
-    txt = Text(shape.text, ctx.length(shape.size), font=shape.font, font_style=style,
+    font_path = None
+    if shape.font_path:
+        from pathlib import Path
+
+        font_path = Path(shape.font_path)
+        if not font_path.is_absolute():
+            font_path = (ctx.base_dir or Path.cwd()) / font_path
+        if not font_path.exists():
+            raise CadgenError(f"font file not found: {font_path}", ctx.feature_id)
+        font_path = str(font_path)
+    txt = Text(shape.text, ctx.length(shape.size), font=shape.font, font_path=font_path, font_style=style,
                align=(Align.CENTER, Align.CENTER))
     return Location((cx, cy, 0), ctx.num(shape.angle)) * txt
 

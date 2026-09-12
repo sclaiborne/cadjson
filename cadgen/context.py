@@ -15,6 +15,7 @@ class Context:
         self.params = resolve_params(params)
         self.scale = UNIT_SCALE[units]
         self.feature_id: str | None = None  # set by the orchestrator while a feature runs
+        self.base_dir = None  # directory of the part file, for relative font/file references
 
     def num(self, dim: Dim) -> float:
         """A unitless number (counts, angles, degrees)."""

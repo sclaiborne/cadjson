@@ -131,6 +131,7 @@ class BuildResult:
 
 def build_document(doc: Document, imports: _Imports | None = None) -> BuildResult:
     ctx = Context(doc.params, doc.units)
+    ctx.base_dir = source_dir(doc)
     builder = Builder()
     _DOC_OF[id(builder)] = doc
     imports = imports or _Imports()

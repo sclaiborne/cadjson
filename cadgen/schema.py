@@ -190,6 +190,7 @@ class TextShape(ShapeBase):
     center: Vec2 = (0, 0)
     angle: Dim = 0
     font: str = "Arial"
+    font_path: str | None = Field(None, description="a .ttf/.otf file, relative to the part file; overrides font")
     bold: bool = False
 
 

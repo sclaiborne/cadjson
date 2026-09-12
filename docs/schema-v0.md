@@ -242,7 +242,7 @@ profile). Every shape may carry a `pattern`. All 2D coordinates are `[u, v]` on 
 | `polygon` | `sides`, `d` (across corners) or `flat` (across flats) | `center`, optional `angle` |
 | `points` | `points: [[u,v], ...]` closed polyline | absolute |
 | `path` | `start: [u,v]`, `segments: [...]` | see below |
-| `text` | `text`, `size`, optional `font` (default Arial), `bold` | `center`, optional `angle`; emboss with extrude add, engrave with a negative-distance cut |
+| `text` | `text`, `size`, optional `font` (installed font name, default Arial) or `font_path` (a .ttf/.otf file relative to the part), `bold` | `center`, optional `angle`; emboss with extrude add, engrave with a negative-distance cut |
 
 `path` segments are strings, one move each, so a profile reads like a sketch walk-through:
 

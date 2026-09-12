@@ -3787,6 +3787,19 @@
           "title": "Font",
           "type": "string"
         },
+        "font_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "a .ttf/.otf file, relative to the part file; overrides font",
+          "title": "Font Path"
+        },
         "bold": {
           "default": false,
           "title": "Bold",
