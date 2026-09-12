@@ -2940,6 +2940,22 @@
           ],
           "title": "H"
         },
+        "radius": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "description": "corner radius (0 = sharp)",
+          "title": "Radius"
+        },
         "angle": {
           "anyOf": [
             {

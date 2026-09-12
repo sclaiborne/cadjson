@@ -61,6 +61,13 @@ def _rect(shape: RectShape, ctx: Context) -> B3dSketch:
         cx, cy = u - w / 2, v + h / 2
     else:
         cx, cy = ctx.vec2(shape.center) if shape.center is not None else (0.0, 0.0)
+    radius = ctx.length(shape.radius)
+    if radius > 0:
+        from build123d import RectangleRounded
+
+        if radius * 2 >= min(w, h) - 1e-9:
+            raise CadgenError(f"rect corner radius {radius:g} is too large for a {w:g} x {h:g} rectangle", ctx.feature_id)
+        return Location((cx, cy, 0)) * RectangleRounded(w, h, radius, rotation=angle)
     return Location((cx, cy, 0)) * Rectangle(w, h, rotation=angle)
 
 

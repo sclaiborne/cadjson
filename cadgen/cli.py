@@ -96,6 +96,22 @@ def export_fusion_cmd(parts, out_dir: Path) -> None:
     sys.exit(1 if failed else 0)
 
 
+@main.command()
+@click.argument("part", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("reference", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--samples", default=20000, show_default=True, help="surface sample points each way")
+def compare(part: Path, reference: Path, samples: int) -> None:
+    """Build PART and compare it with a REFERENCE mesh (STL/3MF/OBJ): volume, bbox, surface distance."""
+    from cadgen.build import build_document, load_document
+    from cadgen.compare import compare as run_compare
+
+    try:
+        result = build_document(load_document(part))
+    except CadgenError as exc:
+        _fail(exc)
+    click.echo(run_compare(result.part, reference, samples=samples).summary())
+
+
 @main.command("export-python")
 @click.argument("parts", nargs=-1, required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True)

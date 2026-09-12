@@ -85,6 +85,9 @@ class PythonExporter:
             else:
                 cx, cy = ctx.vec2(shape.center) if shape.center is not None else (0.0, 0.0)
             rot = f", rotation={_n(ctx.num(shape.angle))}" if ctx.num(shape.angle) else ""
+            radius = ctx.length(shape.radius)
+            if radius > 0:
+                return f"Pos({_n(cx)}, {_n(cy)}) * RectangleRounded({_n(w)}, {_n(h)}, {_n(radius)}{rot})"
             return f"Pos({_n(cx)}, {_n(cy)}) * Rectangle({_n(w)}, {_n(h)}{rot})"
         if isinstance(shape, CircleShape):
             r = ctx.length(shape.r) if shape.r is not None else ctx.length(shape.d) / 2

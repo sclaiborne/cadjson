@@ -120,6 +120,7 @@ class RectShape(ShapeBase):
     type: Literal["rect"]
     w: Dim
     h: Dim
+    radius: Dim = Field(0, description="corner radius (0 = sharp)")
     angle: Dim = 0
     center: Vec2 | None = None
     corner: Vec2 | None = Field(None, description="bottom-left corner")

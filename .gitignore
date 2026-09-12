@@ -22,6 +22,9 @@ out/
 !examples/previews/*.svg
 !examples/previews/*.png
 
+# Reference meshes that parts are recreated from
+!parts/**/*_ref.stl
+
 # Editors / OS
 .vscode/
 .idea/

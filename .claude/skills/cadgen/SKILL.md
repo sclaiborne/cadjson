@@ -102,3 +102,7 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadge
 - `cadgen export-python parts\<name>.json` writes the equivalent standalone build123d script,
   for when the schema cannot express something.
 - `cadgen schema` prints the JSON Schema; `cadgen build --sheet` forces the drawing sheet.
+- `cadgen compare parts\<name>.json reference.stl` checks a recreation against an existing mesh:
+  volume, bbox, and surface distance both ways. Recreating from an STL: measure it with trimesh
+  (bounds, volume, `section` slices at a few heights, sharp edges), model it, then compare.
+  See `parts/zoom_light/` for a worked example with its reference meshes.

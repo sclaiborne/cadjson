@@ -24,6 +24,7 @@ dependencies = [
 dev = [
     "pytest>=8",
     "trimesh>=4",
+    "rtree>=1",
 ]
 
 [project.scripts]
