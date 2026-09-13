@@ -115,7 +115,7 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjs
   named constants, for when the schema cannot express something. `--cadgen` writes a
   text-to-cad model (`@step`/`@stl` decorators) instead.
 - `cadjson view parts\<name>.json` builds and opens `out/<name>/<name>.html`: the model in the
-  browser, orbit/zoom, one colour per placed part with hide/show, X/Y/Z section sliders. Offer
+  browser, orbit/zoom, one colour per placed part with show/hide, hidden lines, x-ray, X/Y/Z section sliders. Offer
   it when the user wants to look at a part or an assembly; `"viewer": true` in `outputs` or
   `cadjson build --viewer` writes the file without opening it.
 - `cadjson schema` prints the JSON Schema; `cadjson build --sheet` forces the drawing sheet.

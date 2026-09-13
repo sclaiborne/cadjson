@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 (2026-09-13)
+
+- Viewer: hidden-lines mode (edges behind material drawn dashed), x-ray, part checkboxes with
+  show all / hide all / only selected, panel layout that fits.
+
 ## 0.3.1 (2026-09-13)
 
 - HTML viewer: `outputs.viewer`, `cadjson build --viewer`, `cadjson view part.json`. One file

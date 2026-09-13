@@ -53,12 +53,17 @@ TEMPLATE = r"""<!doctype html>
 <style>
   html, body { margin: 0; height: 100%; background: #f4f4f2; font: 13px/1.4 system-ui, sans-serif; color: #222; }
   #view { position: absolute; inset: 0; }
-  #panel { position: absolute; top: 12px; left: 12px; width: 240px; background: rgba(255,255,255,.94);
+  #panel { position: absolute; top: 12px; left: 12px; width: 270px; background: rgba(255,255,255,.94);
            border: 1px solid #d8d8d4; border-radius: 6px; padding: 10px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
   #panel h1 { font-size: 14px; margin: 0 0 6px; }
   #panel .dim { color: #666; font-size: 12px; }
   #parts { list-style: none; margin: 8px 0; padding: 0; }
   #parts li { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
+  #parts li input { margin: 0; }
+  #parts .all { font-size: 11px; color: #666; padding: 2px 0 0 18px; }
+  #parts .all a { color: #4a7ebb; cursor: pointer; margin-right: 8px; }
+  .row.buttons { flex-wrap: wrap; gap: 4px; }
+  button.on { background: #e4ecf7; border-color: #4a7ebb; }
   #parts li .sw { width: 12px; height: 12px; border-radius: 2px; flex: none; }
   #parts li.off { opacity: .4; }
   #parts li .v { margin-left: auto; color: #888; font-size: 11px; }
@@ -78,10 +83,10 @@ TEMPLATE = r"""<!doctype html>
   <div class="row"><label>section X</label><input type="range" id="cx" min="0" max="1000" value="1000"></div>
   <div class="row"><label>section Y</label><input type="range" id="cy" min="0" max="1000" value="1000"></div>
   <div class="row"><label>section Z</label><input type="range" id="cz" min="0" max="1000" value="1000"></div>
-  <div class="row"><button id="edges">edges</button><button id="fit">fit</button>
-    <button data-view="iso">iso</button><button data-view="top">top</button><button data-view="front">front</button><button data-view="right">right</button></div>
+  <div class="row buttons"><button data-view="iso">iso</button><button data-view="top">top</button><button data-view="front">front</button><button data-view="right">right</button><button id="fit">fit</button></div>
+  <div class="row buttons"><button id="edges" class="on">edges</button><button id="hidden">hidden lines</button><button id="xray">x-ray</button></div>
 </div>
-<div id="hint">drag: orbit &middot; right-drag: pan &middot; wheel: zoom &middot; click a part in the list to hide it</div>
+<div id="hint">drag: orbit &middot; right-drag: pan &middot; wheel: zoom &middot; untick a part to hide it</div>
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
@@ -134,15 +139,35 @@ DATA.parts.forEach((p, i) => {
   const color = COLORS[i % COLORS.length];
   const mat = new THREE.MeshStandardMaterial({ color, metalness: 0.05, roughness: 0.65, side: THREE.DoubleSide, clippingPlanes: clip, clipShadows: true });
   const mesh = new THREE.Mesh(geo, mat);
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), new THREE.LineBasicMaterial({ color: 0x1a1a1a, clippingPlanes: clip }));
-  const g = new THREE.Group(); g.add(mesh); g.add(edges); group.add(g);
+  const edgeGeo = new THREE.EdgesGeometry(geo, 25);
+  const edges = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x1a1a1a, clippingPlanes: clip }));
+  // the same edges drawn without a depth test, dashed and light: where the solid covers them they
+  // show through as hidden lines; where they are visible the dark pass above paints over them
+  const hiddenGeo = edgeGeo.clone();
+  const hidden = new THREE.LineSegments(hiddenGeo, new THREE.LineDashedMaterial({ color: 0x7a7a7a, dashSize: 1.2, gapSize: 0.8, depthTest: false, depthWrite: false, transparent: true, opacity: 0.9, clippingPlanes: clip }));
+  hidden.computeLineDistances(); hidden.visible = false; hidden.renderOrder = -1;
+  const g = new THREE.Group(); g.add(mesh); g.add(hidden); g.add(edges); group.add(g);
   geo.computeBoundingBox(); bbox.union(geo.boundingBox);
-  meshes.push({ g, edges, p, color });
+  meshes.push({ g, mesh, edges, hidden, p, color });
   const li = document.createElement('li');
-  li.innerHTML = `<span class="sw" style="background:#${color.toString(16).padStart(6, '0')}"></span><span>${p.name}</span><span class="v">${p.volume.toLocaleString()} mm³</span>`;
-  li.onclick = () => { g.visible = !g.visible; li.classList.toggle('off', !g.visible); };
+  li.innerHTML = `<input type="checkbox" checked><span class="sw" style="background:#${color.toString(16).padStart(6, '0')}"></span><span>${p.name}</span><span class="v">${p.volume.toLocaleString()} mm³</span>`;
+  const box = li.querySelector('input');
+  const setVisible = on => { g.visible = on; box.checked = on; li.classList.toggle('off', !on); };
+  box.onchange = () => setVisible(box.checked);
+  li.onclick = e => { if (e.target !== box) setVisible(!g.visible); };
+  meshes[meshes.length - 1].setVisible = setVisible;
   document.getElementById('parts').appendChild(li);
 });
+if (meshes.length > 1) {
+  const all = document.createElement('li'); all.className = 'all';
+  all.innerHTML = '<a data-all="1">show all</a><a data-all="0">hide all</a><a data-all="solo">only selected</a>';
+  all.querySelectorAll('a').forEach(a => a.onclick = e => {
+    e.stopPropagation();
+    if (a.dataset.all === 'solo') { const on = meshes.filter(m => m.g.visible); meshes.forEach(m => m.setVisible(on.length === 0 || on.includes(m))); }
+    else meshes.forEach(m => m.setVisible(a.dataset.all === '1'));
+  });
+  document.getElementById('parts').appendChild(all);
+}
 
 const size = new THREE.Vector3(); bbox.getSize(size);
 const center = new THREE.Vector3(); bbox.getCenter(center);
@@ -168,7 +193,15 @@ function view(dir) {
     clip[k].constant = k === 1 ? -(lo + (hi - lo) * (1 - f)) + 0.01 : lo + (hi - lo) * f + 0.01;
   };
 });
-document.getElementById('edges').onclick = () => { showEdges = !showEdges; meshes.forEach(m => m.edges.visible = showEdges); };
+let showHidden = false, xray = false;
+const toggle = (id, on) => document.getElementById(id).classList.toggle('on', on);
+document.getElementById('edges').onclick = () => { showEdges = !showEdges; meshes.forEach(m => m.edges.visible = showEdges); toggle('edges', showEdges); };
+document.getElementById('hidden').onclick = () => { showHidden = !showHidden; meshes.forEach(m => m.hidden.visible = showHidden); toggle('hidden', showHidden); };
+document.getElementById('xray').onclick = () => {
+  xray = !xray;
+  meshes.forEach(m => { m.mesh.material.transparent = xray; m.mesh.material.opacity = xray ? 0.3 : 1; m.mesh.material.depthWrite = !xray; m.mesh.material.needsUpdate = true; });
+  toggle('xray', xray);
+};
 document.getElementById('fit').onclick = () => view('iso');
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => view(b.dataset.view));
 view('iso');
