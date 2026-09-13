@@ -41,6 +41,7 @@ class FaceSelector(Model):
     sort_by: AxisName | None = None
     near: Vec3 | None = Field(None, description="the single face whose centre is closest")
     area: Range | None = None
+    radius: Range | None = Field(None, description="cylindrical and conical faces only")
 
 
 FaceShortcut = Literal["top", "bottom", "left", "right", "front", "back"]
@@ -375,14 +376,44 @@ BUILTIN_FEATURE_TYPES = {"extrude", "revolve", "fillet", "chamfer", "shell", "ho
 Feature = Annotated[Union[BUILTIN_FEATURES], Field(discriminator="type")]
 
 
+class Mate(Model):
+    """One relationship between a face of the placed part and a face of something already placed."""
+
+    type: Literal["against", "flush", "coaxial", "parallel"] = Field(
+        description="against: flat faces touch, normals opposed; flush: coplanar, same normal; "
+                    "coaxial: cylinder/cone/hole axes coincide; parallel: normals aligned, no move")
+    this: FaceSel = Field(description="face of the placed part, selected in its own coordinates")
+    to: str = Field(description="an earlier placed part's name, the assembly name for its own features, "
+                                "or a datum: XY, XZ, YZ (planes) X, Y, Z (axes)")
+    face: FaceSel | None = Field(None, description="face of the target part (not for datums)")
+    offset: Dim = Field(0, description="against/flush: gap along the target normal")
+    angle: Dim = Field(0, description="coaxial: turn about the axis after mating, degrees")
+    flip: bool = Field(False, description="reverse the direction the mate would pick")
+
+
 class Placement(Model):
     """A part positioned in an assembly."""
 
     file: str
     name: str | None = Field(None, description="defaults to the file's part name")
-    at: Vec3 = (0, 0, 0)
-    rotate: Vec3 = (0, 0, 0)
+    at: Vec3 = Field((0, 0, 0), description="position; what the mates leave free keeps this")
+    rotate: Vec3 = Field((0, 0, 0), description="degrees about X, Y, Z, applied before at and before mates")
     params: dict[str, Dim] = {}
+    mates: list[Mate] = Field([], description="applied in order; each fixes some of the six degrees of freedom")
+
+    def label(self) -> str:
+        return self.name or self.file.rsplit("/", 1)[-1].rsplit("\\", 1)[-1].rsplit(".", 1)[0]
+
+
+class ClearanceCheck(Model):
+    between: tuple[str, str]
+    min: Dim = 0
+    max: Dim | None = None
+
+
+class Checks(Model):
+    interference: Literal["error", "warn", "off"] = Field("warn", description="overlap between any two placed parts")
+    clearance: list[ClearanceCheck] = Field([], description="minimum (and maximum) distance between two parts")
 
 
 # --- outputs -------------------------------------------------------------------------------
@@ -455,6 +486,7 @@ class Document(Model):
     units: Literal["mm", "in"] = "mm"
     params: dict[str, Dim] = {}
     parts: list[Placement] = Field([], description="assembly: other part files placed in this one")
+    checks: Checks | None = Field(None, description="assembly fit checks; interference is checked by default")
     features: list[Feature] = []
     outputs: Outputs = Outputs()
 
@@ -474,6 +506,24 @@ class Document(Model):
                 if ref not in seen:
                     raise ValueError(f"feature {f.id!r} references {ref!r}, which is not an earlier feature id")
             seen.add(f.id)
+        placed: list[str] = []
+        for pl in self.parts:
+            label = pl.label()
+            if label in placed or label == self.name:
+                raise ValueError(f"two placed parts are named {label!r}; give one a different name")
+            for j, m in enumerate(pl.mates):
+                datum = m.to in ("XY", "XZ", "YZ", "X", "Y", "Z")
+                if not datum and m.to not in placed and m.to != self.name:
+                    raise ValueError(f"part {label!r} mate {j} targets {m.to!r}, which is not an earlier placed part, "
+                                     f"the assembly name {self.name!r}, or a datum (XY XZ YZ X Y Z)")
+                if datum and m.face is not None:
+                    raise ValueError(f"part {label!r} mate {j}: a datum target takes no face")
+            placed.append(label)
+        if self.checks is not None:
+            for k, c in enumerate(self.checks.clearance):
+                for n in c.between:
+                    if n not in placed and n != self.name:
+                        raise ValueError(f"checks.clearance[{k}] names {n!r}, which is not a placed part")
         return self
 
 

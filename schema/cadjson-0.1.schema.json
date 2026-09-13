@@ -242,6 +242,33 @@
       "title": "Chamfer",
       "type": "object"
     },
+    "Checks": {
+      "additionalProperties": false,
+      "properties": {
+        "interference": {
+          "default": "warn",
+          "description": "overlap between any two placed parts",
+          "enum": [
+            "error",
+            "warn",
+            "off"
+          ],
+          "title": "Interference",
+          "type": "string"
+        },
+        "clearance": {
+          "default": [],
+          "description": "minimum (and maximum) distance between two parts",
+          "items": {
+            "$ref": "#/$defs/ClearanceCheck"
+          },
+          "title": "Clearance",
+          "type": "array"
+        }
+      },
+      "title": "Checks",
+      "type": "object"
+    },
     "CircleShape": {
       "additionalProperties": false,
       "properties": {
@@ -368,6 +395,63 @@
         "type"
       ],
       "title": "CircleShape",
+      "type": "object"
+    },
+    "ClearanceCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "between": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Between",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        }
+      },
+      "required": [
+        "between"
+      ],
+      "title": "ClearanceCheck",
       "type": "object"
     },
     "Counterbore": {
@@ -1182,6 +1266,18 @@
             }
           ],
           "default": null
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Range"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "cylindrical and conical faces only"
         }
       },
       "title": "FaceSelector",
@@ -1605,6 +1701,117 @@
         "sections"
       ],
       "title": "Loft",
+      "type": "object"
+    },
+    "Mate": {
+      "additionalProperties": false,
+      "description": "One relationship between a face of the placed part and a face of something already placed.",
+      "properties": {
+        "type": {
+          "description": "against: flat faces touch, normals opposed; flush: coplanar, same normal; coaxial: cylinder/cone/hole axes coincide; parallel: normals aligned, no move",
+          "enum": [
+            "against",
+            "flush",
+            "coaxial",
+            "parallel"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "this": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            }
+          ],
+          "description": "face of the placed part, selected in its own coordinates",
+          "title": "This"
+        },
+        "to": {
+          "description": "an earlier placed part's name, the assembly name for its own features, or a datum: XY, XZ, YZ (planes) X, Y, Z (axes)",
+          "title": "To",
+          "type": "string"
+        },
+        "face": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "front",
+                "back"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/FaceSelector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "face of the target part (not for datums)",
+          "title": "Face"
+        },
+        "offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "description": "against/flush: gap along the target normal",
+          "title": "Offset"
+        },
+        "angle": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "description": "coaxial: turn about the axis after mating, degrees",
+          "title": "Angle"
+        },
+        "flip": {
+          "default": false,
+          "description": "reverse the direction the mate would pick",
+          "title": "Flip",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "this",
+        "to"
+      ],
+      "title": "Mate",
       "type": "object"
     },
     "Mirror": {
@@ -2336,6 +2543,7 @@
             0,
             0
           ],
+          "description": "position; what the mates leave free keeps this",
           "maxItems": 3,
           "minItems": 3,
           "prefixItems": [
@@ -2388,6 +2596,7 @@
             0,
             0
           ],
+          "description": "degrees about X, Y, Z, applied before at and before mates",
           "maxItems": 3,
           "minItems": 3,
           "prefixItems": [
@@ -2451,6 +2660,15 @@
           "default": {},
           "title": "Params",
           "type": "object"
+        },
+        "mates": {
+          "default": [],
+          "description": "applied in order; each fixes some of the six degrees of freedom",
+          "items": {
+            "$ref": "#/$defs/Mate"
+          },
+          "title": "Mates",
+          "type": "array"
         }
       },
       "required": [
@@ -4166,6 +4384,18 @@
       },
       "title": "Parts",
       "type": "array"
+    },
+    "checks": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Checks"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "assembly fit checks; interference is checked by default"
     },
     "features": {
       "default": [],

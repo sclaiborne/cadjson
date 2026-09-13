@@ -282,6 +282,23 @@ See `docs/fusion-export.md`.
 - [ ] Fusion export of thread/loft/sweep/part/text and of assemblies (explicit error today)
 - [ ] hatching on section views; sections placed on the sheet
 
+## 13a. Assemblies (2026-09-13)
+
+- [x] mates: `coaxial`, `against`, `flush`, `parallel`; targets are earlier parts, the host body
+      or datums. Solver in `cadjson/assembly.py`: each mate fixes some of the six degrees of
+      freedom (tracked as a free-rotation axis and a free-translation subspace) and leaves the
+      rest at `at` / `rotate`; a coaxial part may still be turned end for end by a later face
+      mate; conflicts are errors that name both mates
+- [x] checks: pairwise interference (volume of the intersection) and clearance
+      (`distance_to`) with min/max; results in `report.json` and the summary
+- [x] `_Imports` caches whole build results so `of` selectors work on placed parts
+- [x] per-part poses in the report (`at` + `rotate` as the same X-then-Y-then-Z degrees the
+      format uses), so a mated assembly can be frozen to coordinates
+- [ ] per-part STL output, parts list with counts, exploded views
+- [ ] hole alignment check (every hole of A has a coaxial hole in B within a tolerance)
+- [ ] `export-python` / `export-fusion` for assemblies (Fusion: components + occurrences)
+- [ ] sub-assemblies are placed as compounds; their inner records are not selectable
+
 ## 14. Extending (2026-09-12)
 
 - [x] `extends` / `drop`: variants inherit a base part (params merge, features replace by id or

@@ -326,6 +326,58 @@ document's own `features` model a host body; they do not see the placed parts. T
 geometry, use the `part` feature instead. Param overrides let one library file serve many
 sizes. References are relative to the file; cycles are errors.
 
+### Mates: positions from relationships
+
+Typing `at` works for a stack; for parts that fit into each other, say how they fit and let
+cadjson work out the numbers:
+
+```jsonc
+"parts": [
+  { "file": "plate.json" },
+  { "file": "hex_standoff.json", "name": "left", "mates": [
+      { "type": "coaxial", "this": { "of": "clear_hole", "geom": "cylinder", "radius": { "max": 2 } },
+        "to": "plate", "face": { "of": "mount_holes", "geom": "cylinder", "nth": 0, "sort_by": "X" } },
+      { "type": "against", "this": "bottom", "to": "plate", "face": "top" } ] },
+  { "file": "spacer.json", "name": "cap", "mates": [
+      { "type": "coaxial", "this": { "of": "ring", "geom": "cylinder", "radius": { "max": 5 } },
+        "to": "left", "face": { "of": "tap_hole", "geom": "cylinder" } },
+      { "type": "against", "this": "bottom", "to": "left", "face": "top" } ] } ]
+```
+
+| type | faces | fixes |
+|---|---|---|
+| `against` | two flat faces, touching, normals opposed; `offset` leaves a gap along the target normal | one direction, one translation |
+| `flush` | two flat faces coplanar with the same normal; `offset` shifts along it | one direction, one translation |
+| `coaxial` | cylinder, cone or hole walls on one axis; `angle` turns about the axis afterwards | one direction, two translations |
+| `parallel` | normals aligned, no movement | one direction |
+
+- `this` selects a face of the placed part in that part's own coordinates (run `cadjson info` on
+  the part file to see them). `to` names an earlier placed part (`name`, or the file stem), the
+  assembly's own `name` for faces of its `features`, or a datum: `XY`, `XZ`, `YZ` (planes, normals
+  as for sketch planes) and `X`, `Y`, `Z` (axes). A datum target takes no `face`.
+- Mates apply in order. Each fixes some of the six degrees of freedom; what stays free keeps the
+  value from `at` / `rotate`, so `at: [0, 0, 20]` plus one `against` mate is fine.
+- A `coaxial` mate does not care which way the axis points; a later `against` or `flush` may
+  turn the part end for end to be met. `flip` reverses the direction a mate would choose.
+- A selector may match several faces as long as they lie on one plane (a ledge and the boss
+  tops level with it) or one axis; otherwise narrow it with `nth`, `near`, `area` or `radius`.
+- A mate that cannot be met without undoing an earlier one is an error naming both, with the
+  most common cause: a selector that matched the wrong face.
+- `report.json` lists every placed part with its derived `at` and `rotate`, so a mated assembly
+  can be turned into typed coordinates when wanted.
+
+### Checks
+
+```jsonc
+"checks": { "interference": "error",
+            "clearance": [ { "between": ["cap", "right"], "min": 1 }, { "between": ["lid", "box"], "min": 0.2, "max": 0.5 } ] }
+```
+
+Interference between every pair of placed parts (and the host body) is always computed and
+reported; `"warn"` (default) prints it, `"error"` fails the build, `"off"` skips it. Each
+`clearance` entry checks the shortest distance between two parts against `min` (and `max`).
+Results go to `report.json` under `assembly` and to the build summary.
+
 ## 8. Outputs
 
 ```jsonc

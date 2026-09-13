@@ -58,15 +58,23 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjs
   counterbore, countersink), `mirror` (plane, features), `pattern` (features, kind linear/polar,
   count, spacing+direction | axis+angle), `thread` (size "M6", kind external/internal, face,
   length, near), `loft` (sections), `sweep` (profile, path), `part` (file, op, at, rotate, params).
-- **Assemblies**: a top-level `parts` list places other part files (`file`, `at`, `rotate`,
-  `params` overrides); they stay separate solids in the STEP.
+- **Assemblies**: a top-level `parts` list places other part files (`file`, `name`, `at`,
+  `rotate`, `params` overrides, `mates`); they stay separate solids in the STEP. Position parts
+  with mates, not typed coordinates: `{ "type": "coaxial", "this": <face of this part>, "to":
+  "<earlier part name | assembly name | XY XZ YZ X Y Z>", "face": <face of that part> }`, then
+  `against` (flat faces touch, `offset` = gap), `flush` (coplanar), `parallel` (turn only).
+  Mates apply in order; whatever they leave free keeps `at`/`rotate`. Selectors in `this` are in
+  the part's own coordinates (`cadjson info` on that part file). `checks`: interference
+  between placed parts is reported (`"interference": "error"` fails the build); `clearance`
+  entries `{ "between": [a, b], "min": 0.5 }` verify gaps. Results are in `report.json` under
+  `assembly` with each part's derived `at` / `rotate`.
 - **Variants**: `"extends": "base.json"` inherits a part; override `params`, replace features by
   id, append new ones, `drop` unwanted ones (docs/extending.md). Prefer a variant over copying.
 - **Plugins**: extra feature types from installed plugins show up in `cadjson plugins` and in
   schema errors; `CADJSON_PLUGINS=module` loads one from the path.
 - **Text**: a `text` sketch shape (text, size, center); cut with a negative distance to engrave.
 - **Selectors** (all filters AND together; never indices):
-  faces: `of`, `normal` `"+Z"`, `geom`, `nth` + `sort_by`, `near`, `area`; shortcuts `"top"`,
+  faces: `of`, `normal` `"+Z"`, `geom`, `nth` + `sort_by`, `near`, `area`, `radius`; shortcuts `"top"`,
   `"bottom"`, `"left"`, `"right"`, `"front"`, `"back"`.
   edges: `of`, `of_face`, `parallel_to`, `convex` (true = outer corners), `geom`, `radius`,
   `length`, `near`, `nth`. `of` means "created by that feature", tracked through later trimming.

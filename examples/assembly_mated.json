@@ -1,0 +1,56 @@
+{
+  "$schema": "../schema/cadjson-0.1.schema.json",
+  "schema": "cadjson/0.1",
+  "name": "assembly_mated",
+  "description": "Assembly positioned by mates instead of coordinates: two hex standoffs sit in the plate's holes (coaxial + against), a spacer sits on the left standoff, coaxial with its tapped hole. Fit checks: any overlap is an error, the spacer must clear the right standoff by 1 mm. Positions in report.json are derived from the mates.",
+  "units": "mm",
+
+  "params": {
+    "plate_len": 50,
+    "plate_w": 24,
+    "plate_t": 3,
+    "pitch": 30,
+    "mount_d": 3.4
+  },
+
+  "features": [
+    {
+      "id": "plate",
+      "type": "extrude", "distance": "plate_t",
+      "sketch": { "plane": "XY", "shapes": [ { "type": "rect", "w": "plate_len", "h": "plate_w", "radius": 4 } ] }
+    },
+    {
+      "id": "mount_holes",
+      "type": "hole", "face": "top", "diameter": "mount_d", "through": true,
+      "at": [["-pitch / 2", 0], ["pitch / 2", 0]]
+    }
+  ],
+
+  "parts": [
+    { "file": "hex_standoff.json", "name": "left",
+      "mates": [
+        { "type": "coaxial", "this": { "of": "clear_hole", "geom": "cylinder", "radius": { "max": 2 } },
+          "to": "assembly_mated", "face": { "of": "mount_holes", "geom": "cylinder", "nth": 0, "sort_by": "X" } },
+        { "type": "against", "this": "bottom", "to": "assembly_mated", "face": "top" }
+      ] },
+    { "file": "hex_standoff.json", "name": "right",
+      "mates": [
+        { "type": "coaxial", "this": { "of": "clear_hole", "geom": "cylinder", "radius": { "max": 2 } },
+          "to": "assembly_mated", "face": { "of": "mount_holes", "geom": "cylinder", "nth": 1, "sort_by": "X" }, "angle": 30 },
+        { "type": "against", "this": "bottom", "to": "assembly_mated", "face": "top" }
+      ] },
+    { "file": "spacer.json", "name": "cap",
+      "mates": [
+        { "type": "coaxial", "this": { "of": "ring", "geom": "cylinder", "radius": { "max": 5 } },
+          "to": "left", "face": { "of": "tap_hole", "geom": "cylinder" } },
+        { "type": "against", "this": "bottom", "to": "left", "face": "top" }
+      ] }
+  ],
+
+  "checks": {
+    "interference": "error",
+    "clearance": [ { "between": ["cap", "right"], "min": 1 } ]
+  },
+
+  "outputs": { "step": true, "drawing": { "views": ["front", "iso"], "hidden_lines": true } }
+}

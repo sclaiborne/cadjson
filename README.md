@@ -31,8 +31,8 @@ cleanly, and can be written or edited by an AI. The repo ships a Claude Code ski
 Python 3.11 or newer. Wheels exist for Windows, Linux and macOS.
 
 ```
-pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.2.0"
-pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.2.0"   # + dimensioned sheets
+pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.0"
+pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.0"   # + dimensioned sheets
 ```
 
 ## Use
@@ -52,7 +52,8 @@ cadjson init my-parts               # scaffold a parts repository, Claude skill 
 
 Features: extrude, revolve, fillet, chamfer, shell, holes (plain, counterbore, countersink,
 or a standard thread size such as `M3` / `#6-32` with tap or clearance fit), real ISO threads,
-mirror, linear and polar patterns, loft, sweep, text, imported parts, assemblies.
+mirror, linear and polar patterns, loft, sweep, text, imported parts, assemblies positioned
+by mates (coaxial, against, flush, parallel) with interference and clearance checks.
 Sketch shapes: rectangle (optionally rounded), circle, slot, polygon, points, path of
 relative moves and arcs, text, with add/subtract and linear/polar/grid patterns.
 Selectors pick faces and edges by the feature that made them, normal, direction, convexity,
@@ -62,11 +63,11 @@ geometry type, size or proximity, never by index. Variants inherit a base part w
 Format reference: [docs/schema-v0.md](docs/schema-v0.md). Fusion export:
 [docs/fusion-export.md](docs/fusion-export.md). Variants and plugins:
 [docs/extending.md](docs/extending.md). Options survey and plan: [PLANNING.md](PLANNING.md).
-Fourteen example parts with previews live in [examples/](examples/).
+Fifteen example parts with previews live in [examples/](examples/).
 
 ## Status
 
-Version 0.2.0. Everything above builds and is covered by tests on Windows and Linux. Known
+Version 0.3.0. Everything above builds and is covered by tests on Windows and Linux. Known
 limits: the Fusion export is verified against a fake API, not yet inside Fusion; sketch
 geometry in the Fusion script is numeric (parameters drive feature values, not sketch
 dimensions); sheets dimension automatically with no way to request a specific dimension;

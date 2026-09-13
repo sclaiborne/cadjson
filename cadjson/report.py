@@ -34,6 +34,7 @@ def build_report(result, files: list[Path], notes: list[str] | None = None) -> d
         "files": [str(p) for p in files],
         "notes": notes or [],
         "extends": _extends_chain(doc),
+        **({"assembly": result.assembly} if result.assembly else {}),
     }
 
 

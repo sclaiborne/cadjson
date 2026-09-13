@@ -78,6 +78,18 @@ def edge_sig(edge: Edge) -> tuple:
     return edge_key(edge)
 
 
+def face_radius(face: Face) -> float | None:
+    """Radius of a cylindrical face, reference radius of a conical one, else None."""
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+
+    geom = face.geom_type.name
+    if geom == "CYLINDER":
+        return BRepAdaptor_Surface(face.wrapped).Cylinder().Radius()
+    if geom == "CONE":
+        return BRepAdaptor_Surface(face.wrapped).Cone().RefRadius()
+    return None
+
+
 def _axis_vec(name: str) -> Vector:
     sign = -1 if name[0] == "-" else 1
     return AXIS[name[-1]] * sign
@@ -142,6 +154,9 @@ class Selection:
         if sel.area is not None:
             cands = [f for f in cands if _in_range(f.area, sel.area, ctx)]
             steps.append("area range")
+        if sel.radius is not None:
+            cands = [f for f in cands if (r := face_radius(f)) is not None and _in_range(r, sel.radius, ctx)]
+            steps.append("radius range")
         if sel.near is not None:
             p = ctx.vec3(sel.near)
             cands = sorted(cands, key=lambda f: (f.center() - p).length)[:1]

@@ -1,7 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-09-13)
 
+- Assemblies positioned by **mates**: `coaxial`, `against`, `flush`, `parallel` between faces of
+  placed parts, the host body or the XY/XZ/YZ/X/Y/Z datums. Mates apply in order and leave the
+  rest of `at` / `rotate` alone; `report.json` lists the derived pose of every part.
+- Assembly **checks**: interference between placed parts (warn, error or off) and named
+  clearance limits, in `report.json` and the build summary.
+- Face selector `radius` (cylinders and cones), for picking hole walls and shanks.
+- Example `assembly_mated.json`.
 - `export-python` keeps params by name: they are constants at the top of the script, and every
   dimension written in the part file is the same expression in the script (sketches, paths,
   patterns, holes, fillets, extrudes). The model is a function; helpers are included only when

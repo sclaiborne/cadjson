@@ -139,10 +139,13 @@ class _Imports:
     """Builds referenced part files with caching and cycle detection."""
 
     def __init__(self):
-        self.cache: dict[tuple, Part] = {}
+        self.cache: dict[tuple, BuildResult] = {}
         self.stack: list[Path] = []
 
     def build(self, doc: Document, file: str, overrides: dict, ctx: Context, fid: str | None) -> Part:
+        return self.result(doc, file, overrides, ctx, fid).part
+
+    def result(self, doc: Document, file: str, overrides: dict, ctx: Context, fid: str | None) -> BuildResult:
         path = (source_dir(doc) / file).resolve()
         if not path.exists():
             raise CadjsonError(f"part file not found: {path}", fid)
@@ -161,20 +164,18 @@ class _Imports:
             SOURCE_PATHS[id(sub2)] = path
             self.stack.append(path)
             try:
-                self.cache[key] = build_document(sub2, imports=self).part
+                self.cache[key] = build_document(sub2, imports=self)
             finally:
                 self.stack.pop()
         return self.cache[key]
 
 
 def _transform(shape: Part, at: Vector, rotate) -> Part:
-    out = shape
-    for axis, deg in zip((Axis.X, Axis.Y, Axis.Z), rotate):
-        if abs(deg) > 1e-12:
-            out = out.rotate(axis, deg)
-    if at.length > 1e-12:
-        out = out.translate(at)
-    return out
+    from cadjson.assembly import Pose
+
+    if at.length < 1e-12 and all(abs(r) < 1e-12 for r in rotate):
+        return shape
+    return Pose.from_euler((at.X, at.Y, at.Z), rotate).apply(shape)
 
 
 def parse_document(raw: dict, source: str = "document") -> Document:
@@ -202,6 +203,12 @@ class BuildResult:
     builder: Builder
     timings: dict[str, float] = field(default_factory=dict)
     files: list[Path] = field(default_factory=list)
+    assembly: dict | None = None  # placed parts, poses and check results (see cadjson.assembly)
+
+    def warnings(self) -> list[str]:
+        from cadjson.assembly import check_messages
+
+        return check_messages(self.assembly) if self.assembly else []
 
     def summary(self) -> str:
         bb = self.part.bounding_box()
@@ -213,6 +220,12 @@ class BuildResult:
         ]
         for fid, t in self.timings.items():
             lines.append(f"  {fid:<24} {t * 1000:7.1f} ms")
+        for p in (self.assembly or {}).get("parts", []):
+            at = ", ".join(f"{v:g}" for v in p["at"])
+            rot = ", ".join(f"{v:g}" for v in p["rotate"])
+            lines.append(f"  {p['name']:<24} at [{at}] rotate [{rot}]")
+        for msg in self.warnings():
+            lines.append(f"  check: {msg}")
         return "\n".join(lines)
 
 
@@ -229,24 +242,49 @@ def build_document(doc: Document, imports: _Imports | None = None) -> BuildResul
         _run_feature(feat, ctx, builder, imports)
         timings[feat.id] = time.perf_counter() - t0
     shape = builder.solid
+    assembly = None
     if doc.parts:
         # Placed parts stay separate solids; the document's own features model the host body.
+        from cadjson.assembly import Pose, run_checks, solve_mates
+
         t0 = time.perf_counter()
-        placed = []
+        placed: list[tuple[str, Part]] = []
+        targets: dict = {}
+
+        def selector(res_part, res_builder):
+            return lambda sel: Selection(res_part, ctx, res_builder.new_faces, res_builder.new_edges).faces(sel)
+
+        if shape is not None:
+            targets[doc.name] = (selector(shape, builder), Pose())
+        report_parts = []
         for i, pl in enumerate(doc.parts):
-            label = pl.name or Path(pl.file).stem
+            label = pl.label()
             ctx.feature_id = f"parts[{i}]"
-            sub = imports.build(doc, pl.file, pl.params, ctx, ctx.feature_id)
-            sub = _transform(sub, ctx.vec3(pl.at), [ctx.num(r) for r in pl.rotate])
+            res = imports.result(doc, pl.file, pl.params, ctx, ctx.feature_id)
+            pose = Pose.from_euler([ctx.length(v) for v in pl.at], [ctx.num(r) for r in pl.rotate])
+            select = selector(res.part, res.builder)
+            if pl.mates:
+                pose = solve_mates(pose, label, pl.mates, select, targets, ctx, ctx.feature_id)
+            sub = pose.apply(res.part)
             sub.label = label
-            placed.append(sub)
+            placed.append((label, sub))
+            targets[label] = (select, pose)
+            report_parts.append({"name": label, "file": pl.file, "params": {k: ctx.num(v) for k, v in pl.params.items()},
+                                 **pose.describe(), "volume_mm3": round(sub.volume, 4)})
         if shape is not None:
             shape.label = doc.name
-            placed.append(shape)
-        shape = Part(children=placed) if len(placed) > 1 else placed[0]
+            placed.append((doc.name, shape))
+        ctx.feature_id = "checks"
+        assembly = {"parts": report_parts, **run_checks(placed, doc.checks, ctx)}
+        if doc.checks is not None and doc.checks.interference == "error" and assembly["interference"]:
+            hit = assembly["interference"][0]
+            raise CadjsonError(f"{hit['between'][0]} and {hit['between'][1]} overlap by {hit['volume_mm3']:g} mm^3",
+                               "checks", ["set checks.interference to 'warn' to build anyway"])
+        solids = [s for _, s in placed]
+        shape = Part(children=solids) if len(solids) > 1 else solids[0]
         timings["parts"] = time.perf_counter() - t0
     ctx.feature_id = None
-    return BuildResult(doc, shape, builder, timings)
+    return BuildResult(doc, shape, builder, timings, assembly=assembly)
 
 
 class FeatureAPI:
