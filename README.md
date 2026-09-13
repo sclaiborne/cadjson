@@ -28,11 +28,11 @@ cleanly, and can be written or edited by an AI. The repo ships a Claude Code ski
 
 ## Install
 
-Python 3.11 or newer. Wheels exist for Windows, Linux and macOS.
+Python 3.11 or 3.12. Wheels exist for Windows, Linux and macOS.
 
 ```
-pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.2"
-pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.2"   # + dimensioned sheets
+pip install "cadjson @ git+https://github.com/sclaiborne/cadjson@v0.3.2"
+pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/cadjson@v0.3.2"   # + dimensioned sheets
 ```
 
 ## Use
@@ -64,11 +64,12 @@ geometry type, size or proximity, never by index. Variants inherit a base part w
 Format reference: [docs/schema-v0.md](docs/schema-v0.md). Fusion export:
 [docs/fusion-export.md](docs/fusion-export.md). Variants and plugins:
 [docs/extending.md](docs/extending.md). Options survey and plan: [PLANNING.md](PLANNING.md).
-Fifteen example parts with previews live in [examples/](examples/).
+Every example part in [examples/](examples/) has previews next to it.
 
 ## Status
 
-Version 0.3.2. Everything above builds and is covered by tests on Windows and Linux. Known
+Version 0.3.2. Everything above builds and is covered by tests on Windows and Linux with
+Python 3.11 and 3.12 (3.13 is untested: the sheets extra pins an older build123d there). Known
 limits: the Fusion export is verified against a fake API, not yet inside Fusion; sketch
 geometry in the Fusion script is numeric (parameters drive feature values, not sketch
 dimensions); sheets dimension automatically with no way to request a specific dimension;
@@ -97,5 +98,4 @@ docs/          format reference, Fusion export, extending
 examples/      example parts, previews, an example plugin
 schema/        generated JSON Schema (cadjson schema -o schema/cadjson-0.1.schema.json)
 tests/
-experiments/   throwaway scripts that verified the toolchain during development
 ```

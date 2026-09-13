@@ -1,6 +1,8 @@
-# CAD-Generator: options survey and plan
+# cadjson: options survey, decisions and status log
 
-Date: 2026-09-12. Status: planning, no decisions locked yet.
+Started 2026-09-12. Sections 1 to 6 are the survey and the draft plan as written before any
+code existed; section 7 records the decisions; sections 8 onward are the status of each phase
+as it landed, kept as history. For what the tool does today read the README and `docs/`.
 
 ## 1. Goal
 

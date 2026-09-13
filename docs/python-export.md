@@ -90,7 +90,7 @@ if __name__ == "__main__":
 cadjson itself does not need cadgen. To run the models in the same environment:
 
 ```
-pip install "cadjson[cadgen] @ git+https://github.com/sclaiborne/CAD-Generator"
+pip install "cadjson[cadgen] @ git+https://github.com/sclaiborne/cadjson"
 ```
 
 The extra pins `cadgen<0.6` because text-to-cad does not keep backwards compatibility between

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "sclaiborne" }]
-urls = { Homepage = "https://github.com/sclaiborne/CAD-Generator" }
+urls = { Homepage = "https://github.com/sclaiborne/cadjson" }
 dependencies = [
     # draftwright pins build123d <0.11 on Python <3.13, so accept 0.10 too
     "build123d>=0.10,<0.12",

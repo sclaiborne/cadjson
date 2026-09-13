@@ -14,16 +14,17 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjs
 
 1. Write or edit the part in `parts/<name>.json` (or `examples/`). Put every dimension the
    user named in `params` and reference it by name. Never write derived coordinates by hand.
-2. Validate, then build:
+2. Validate, then build (the `cadjson` command lives in the repo's `.venv`: run
+   `.venv/bin/cadjson`, or `.venv\Scripts\cadjson` on Windows, or activate the venv first):
    ```
-   .venv\Scripts\cadjson validate parts\<name>.json
-   .venv\Scripts\cadjson build parts\<name>.json
+   cadjson validate parts/<name>.json
+   cadjson build parts/<name>.json
    ```
 3. Read `out/<name>/report.json` (volume, bbox, feature timings, files) and **look at**
    `out/<name>/<name>_iso.png` and `<name>_front.png` with the Read tool. Feature-order
    mistakes are silent; a picture catches them. Compare the volume with a hand estimate.
 4. If a selector or fillet fails, the error names the feature and lists candidates. Run
-   `.venv\Scripts\cadjson info parts\<name>.json` to see every face and edge with normal,
+   `cadjson info parts/<name>.json` to see every face and edge with normal,
    centre and size, then fix the selector. Do not switch to raw indices.
 5. Report to the user: what was built, the volume and bbox, which files exist, and anything
    you assumed (unlabelled sizes, hole positions).
@@ -109,17 +110,17 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjs
 
 ## Other commands
 
-- `cadjson export-fusion parts\<name>.json` writes a Fusion 360 script (native timeline) into
+- `cadjson export-fusion parts/<name>.json` writes a Fusion 360 script (native timeline) into
   `out/<name>_fusion/`; the user runs it from Fusion's Scripts dialog.
-- `cadjson export-python parts\<name>.json` writes the equivalent build123d script, params as
+- `cadjson export-python parts/<name>.json` writes the equivalent build123d script, params as
   named constants, for when the schema cannot express something. `--cadgen` writes a
   text-to-cad model (`@step`/`@stl` decorators) instead.
-- `cadjson view parts\<name>.json` builds and opens `out/<name>/<name>.html`: the model in the
+- `cadjson view parts/<name>.json` builds and opens `out/<name>/<name>.html`: the model in the
   browser, orbit/zoom, one colour per placed part with show/hide, hidden lines, x-ray, X/Y/Z section sliders. Offer
   it when the user wants to look at a part or an assembly; `"viewer": true` in `outputs` or
   `cadjson build --viewer` writes the file without opening it.
 - `cadjson schema` prints the JSON Schema; `cadjson build --sheet` forces the drawing sheet.
-- `cadjson compare parts\<name>.json reference.stl` checks a recreation against an existing mesh:
+- `cadjson compare parts/<name>.json reference.stl` checks a recreation against an existing mesh:
   volume, bbox, and surface distance both ways. Recreating from an STL: measure it with trimesh
   (bounds, volume, `section` slices at a few heights, sharp edges), model it, then compare.
   Keep the mesh beside the part as `<name>_ref.stl`.

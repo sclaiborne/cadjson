@@ -27,12 +27,12 @@ out/
 
 README = """# {name}
 
-Part designs as text, built with [cadjson](https://github.com/sclaiborne/CAD-Generator).
+Part designs as text, built with [cadjson](https://github.com/sclaiborne/cadjson).
 
 ```
-py -3.12 -m venv .venv
-.venv\\Scripts\\python -m pip install -r requirements.txt
-.venv\\Scripts\\cadjson build parts\\<project>\\<part>.json
+python3.12 -m venv .venv                     # py -3.12 -m venv .venv on Windows
+.venv/bin/python -m pip install -r requirements.txt    # .venv\\Scripts\\python on Windows
+.venv/bin/cadjson build parts/<project>/<part>.json
 ```
 
 Layout: `parts/<project>/<part>.json`, reference meshes as `*_ref.stl`, previews and
@@ -44,14 +44,15 @@ Refresh it after upgrading cadjson with `cadjson init . --update`.
 """
 
 REQUIREMENTS = """# pin the tool so parts keep building the same way; bump the tag deliberately
-cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v{version}
+cadjson @ git+https://github.com/sclaiborne/cadjson@v{version}
 """
 
 CLAUDE_MD = """# {name}
 
 This repository holds cadjson part files (JSON feature trees). Use the `cadjson` skill in
 `.claude/skills/cadjson/SKILL.md` for the format and the validate / build / look-at-previews
-workflow. The tool is installed in `.venv` (`.venv\\Scripts\\cadjson`). Part files live under
+workflow. The tool is installed in `.venv` (`.venv/bin/cadjson`, `.venv\\Scripts\\cadjson` on
+Windows). Part files live under
 `parts/<project>/`; keep reference meshes as `*_ref.stl` next to the part they were
 recreated from, and commit previews plus `report.json` with each change.
 """
