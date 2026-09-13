@@ -260,7 +260,8 @@ See `docs/fusion-export.md`.
 - [x] `out/<name>/report.json` on every build: volume, bbox, params, per-feature timings, files
 - [x] `cadjson info --json`
 - [x] `cadjson export-python`: standalone build123d script; tested to rebuild every example to
-      the same volume
+      the same volume. Params are named constants and every written dimension is emitted as
+      its expression; `--cadgen` writes a text-to-cad model (see section 15)
 - [x] regression corpus grown to 9 examples (knob: revolve with arc + polar feature pattern;
       plate_inch: inch units + countersinks; hex_standoff: blind and counterbored holes from
       opposite faces)
@@ -372,10 +373,13 @@ the Phase 0 decision, and they have momentum. cadjson's reason to exist is the o
 that decision: the part file is data, so it can be diffed by dimension, validated by schema,
 edited without Python, and regenerated as a Fusion timeline. Positioning for the README, when
 it is written: not a competitor to text-to-cad's pipeline but a different source format with
-different guarantees. The two are complementary in one concrete way already:
-`cadjson export-python` emits a build123d script, and wrapping that in their `@step`
-decorator would feed a cadjson part into their viewer, inspection, printability and
-slicing skills. Worth an example, and possibly a `--text-to-cad` flag on `export-python`.
+different guarantees. Their inspection, printability and slicing tools read STEP and STL, so
+they already work on `cadjson build` output with no Python in between. For people who want a
+cadjson part as one of their models (freshness gate, warm daemon, viewer), `cadjson
+export-python --cadgen` writes the script with `@step`/`@stl`/`@threemf` and lazy `bd.` names;
+the `[cadgen]` extra pins `cadgen<0.6`, and a test runs the real package when it is installed.
+Their static discovery reads top-level `from cadgen import step`, so a single script that falls
+back to plain build123d with `try/except ImportError` would not be found; hence two flavors.
 
 **Ideas worth borrowing.** A warm process for repeated builds; a `doctor` that checks the
 installed version against the skill's pin; byte-deterministic STEP output so identical

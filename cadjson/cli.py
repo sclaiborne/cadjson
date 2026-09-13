@@ -115,8 +115,9 @@ def compare(part: Path, reference: Path, samples: int) -> None:
 @main.command("export-python")
 @click.argument("parts", nargs=-1, required=True, type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True)
-def export_python_cmd(parts, out_dir: Path) -> None:
-    """Write a standalone build123d script equivalent to building PARTS."""
+@click.option("--cadgen", is_flag=True, help="write a text-to-cad model (cadgen @step/@stl decorators) instead of a plain script")
+def export_python_cmd(parts, out_dir: Path, cadgen: bool) -> None:
+    """Write a build123d script equivalent to building PARTS, with the params as named constants."""
     from cadjson.build import load_document
     from cadjson.pyexport import export_python
 
@@ -124,7 +125,7 @@ def export_python_cmd(parts, out_dir: Path) -> None:
     for path in parts:
         try:
             doc = load_document(path)
-            click.echo(f"  wrote {export_python(doc, out_dir / doc.name)}")
+            click.echo(f"  wrote {export_python(doc, out_dir / doc.name, cadgen=cadgen)}")
         except CadjsonError as exc:
             failed += 1
             click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)

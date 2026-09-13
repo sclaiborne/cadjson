@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- `export-python` keeps params by name: they are constants at the top of the script, and every
+  dimension written in the part file is the same expression in the script (sketches, paths,
+  patterns, holes, fillets, extrudes). The model is a function; helpers are included only when
+  used. See docs/python-export.md.
+- `export-python --cadgen` writes a text-to-cad model (`@step`, plus `@stl` / `@threemf` from the
+  part's outputs) using cadgen's lazy build123d import. Optional extra: `cadjson[cadgen]`.
+
 ## 0.2.0 (2026-09-12)
 
 - Renamed from cadgen to **cadjson** (package, CLI, skill, schema string `cadjson/0.1`).

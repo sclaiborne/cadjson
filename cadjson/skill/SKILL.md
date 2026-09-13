@@ -103,8 +103,9 @@ script. Full format: `docs/schema-v0.md`. Machine-readable schema: `schema/cadjs
 
 - `cadjson export-fusion parts\<name>.json` writes a Fusion 360 script (native timeline) into
   `out/<name>_fusion/`; the user runs it from Fusion's Scripts dialog.
-- `cadjson export-python parts\<name>.json` writes the equivalent standalone build123d script,
-  for when the schema cannot express something.
+- `cadjson export-python parts\<name>.json` writes the equivalent build123d script, params as
+  named constants, for when the schema cannot express something. `--cadgen` writes a
+  text-to-cad model (`@step`/`@stl` decorators) instead.
 - `cadjson schema` prints the JSON Schema; `cadjson build --sheet` forces the drawing sheet.
 - `cadjson compare parts\<name>.json reference.stl` checks a recreation against an existing mesh:
   volume, bbox, and surface distance both ways. Recreating from an STL: measure it with trimesh

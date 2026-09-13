@@ -82,7 +82,8 @@ ordering is validated.
 
 Optional exporters: `registry.fusion_emitter("disc")` and `registry.python_emitter("disc")`
 decorate functions `(feat, exporter)` that emit code; without them the exporters report the
-feature as unsupported.
+feature as unsupported. A Python emitter should write dimensions with `exporter.length(dim)` /
+`exporter.num(dim)` so they stay named (see docs/python-export.md).
 
 Plugin types appear in validation errors, in `cadjson plugins`, and in
 `cadjson schema --with-plugins`. The committed `schema/cadjson-0.1.schema.json` is built-ins only.

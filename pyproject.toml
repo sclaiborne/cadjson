@@ -27,6 +27,8 @@ dependencies = [
 [project.optional-dependencies]
 # dimensioned drawing sheets; draftwright is AGPL-3 (see README, Licensing)
 sheets = ["draftwright>=0.4.28"]
+# run `export-python --cadgen` scripts in the same environment (text-to-cad; its API moves fast)
+cadgen = ["cadgen>=0.5.1,<0.6"]
 dev = [
     "pytest>=8",
     "draftwright>=0.4.28",
