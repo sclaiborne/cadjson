@@ -51,9 +51,22 @@ def validate(parts: tuple[Path, ...]) -> None:
 @click.option("--png/--no-png", default=None, help="override the document's PNG preview setting")
 @click.option("--views", default=None, help="comma-separated views, e.g. front,top,right,iso (overrides the document)")
 @click.option("--sheet/--no-sheet", default=None, help="override the document's drawing-sheet setting")
+@click.option("--viewer/--no-viewer", default=None, help="override the document's HTML viewer setting")
 @click.option("--flat", is_flag=True, help="write into OUT directly instead of OUT/<name>/")
-def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
+def build(parts, out_dir: Path, step, stl, png, views, sheet, viewer, flat) -> None:
     """Build PARTS: run the feature tree and write the requested outputs."""
+    _build(parts, out_dir, step, stl, png, views, sheet, viewer, flat, open_viewer=False)
+
+
+@main.command()
+@click.argument("part", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("-o", "--out", "out_dir", type=click.Path(path_type=Path), default=Path("out"), show_default=True)
+def view(part: Path, out_dir: Path) -> None:
+    """Build PART with the HTML viewer and open it in the browser."""
+    _build([part], out_dir, None, None, False, None, False, True, False, open_viewer=True)
+
+
+def _build(parts, out_dir: Path, step, stl, png, views, sheet, viewer, flat, *, open_viewer: bool) -> None:
     from cadjson.build import build_document, load_document, write_outputs
 
     view_list = [v.strip() for v in views.split(",") if v.strip()] if views else None
@@ -63,10 +76,15 @@ def build(parts, out_dir: Path, step, stl, png, views, sheet, flat) -> None:
             doc = load_document(path)
             result = build_document(doc)
             target = out_dir if flat else out_dir / doc.name
-            files = write_outputs(result, target, step=step, stl=stl, png=png, views=view_list, sheet=sheet)
+            files = write_outputs(result, target, step=step, stl=stl, png=png, views=view_list, sheet=sheet,
+                                  viewer=viewer)
             click.echo(result.summary())
             for f in files:
                 click.echo(f"  wrote {f}")
+            if open_viewer:
+                import webbrowser
+
+                webbrowser.open((target / f"{doc.name}.html").resolve().as_uri())
         except CadjsonError as exc:
             failed += 1
             click.secho(f"{path}: error: " + exc.format(), fg="red", err=True)

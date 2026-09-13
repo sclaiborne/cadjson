@@ -471,6 +471,7 @@ class Outputs(Model):
     three_mf: bool | ThreeMfOptions = Field(False, alias="3mf")
     drawing: bool | DrawingOptions = False
     png: bool = True
+    viewer: bool = Field(False, description="<name>.html: the model in the browser, orbit/zoom, one colour per placed part")
 
 
 class Document(Model):

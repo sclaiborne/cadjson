@@ -3,8 +3,8 @@
 CAD as text. A part is one JSON file: named dimensions, an ordered list of features, and the
 outputs you want. `cadjson` builds it with the OpenCascade kernel and writes STEP for any CAD
 package, STL and 3MF for printing, 2D drawings with hidden lines, section views, an annotated
-drawing sheet, PNG previews, a Fusion 360 script that rebuilds the part with a native timeline,
-and a `report.json` with the numbers. Because the source is text, parts live in git, diff
+drawing sheet, PNG previews, an HTML viewer to turn the model around in a browser, a Fusion 360
+script that rebuilds the part with a native timeline, and a `report.json` with the numbers. Because the source is text, parts live in git, diff
 cleanly, and can be written or edited by an AI. The repo ships a Claude Code skill for that.
 
 <p align="center">
@@ -31,8 +31,8 @@ cleanly, and can be written or edited by an AI. The repo ships a Claude Code ski
 Python 3.11 or newer. Wheels exist for Windows, Linux and macOS.
 
 ```
-pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.0"
-pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.0"   # + dimensioned sheets
+pip install "cadjson @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.1"
+pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v0.3.1"   # + dimensioned sheets
 ```
 
 ## Use
@@ -41,6 +41,7 @@ pip install "cadjson[sheets] @ git+https://github.com/sclaiborne/CAD-Generator@v
 cadjson validate part.json          # schema and params, no geometry
 cadjson build part.json             # STEP, STL, views, previews, report -> out/<name>/
 cadjson build part.json --sheet     # plus the annotated drawing sheet (needs [sheets])
+cadjson view part.json              # build and open the model in the browser (orbit, hide parts, sections)
 cadjson info part.json              # every face and edge, for writing selectors
 cadjson compare part.json ref.stl   # volume, bbox and surface distance vs a reference mesh
 cadjson export-fusion part.json     # Fusion 360 script with a native parametric timeline
@@ -67,7 +68,7 @@ Fifteen example parts with previews live in [examples/](examples/).
 
 ## Status
 
-Version 0.3.0. Everything above builds and is covered by tests on Windows and Linux. Known
+Version 0.3.1. Everything above builds and is covered by tests on Windows and Linux. Known
 limits: the Fusion export is verified against a fake API, not yet inside Fusion; sketch
 geometry in the Fusion script is numeric (parameters drive feature values, not sketch
 dimensions); sheets dimension automatically with no way to request a specific dimension;

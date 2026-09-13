@@ -2079,6 +2079,12 @@
           "default": true,
           "title": "Png",
           "type": "boolean"
+        },
+        "viewer": {
+          "default": false,
+          "description": "<name>.html: the model in the browser, orbit/zoom, one colour per placed part",
+          "title": "Viewer",
+          "type": "boolean"
         }
       },
       "title": "Outputs",
@@ -4466,7 +4472,8 @@
         "stl": false,
         "3mf": false,
         "drawing": false,
-        "png": true
+        "png": true,
+        "viewer": false
       }
     }
   },

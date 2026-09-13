@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (2026-09-13)
+
+- HTML viewer: `outputs.viewer`, `cadjson build --viewer`, `cadjson view part.json`. One file
+  with the meshes embedded; three.js from a CDN; orbit and zoom, one colour per placed part
+  with hide/show, X/Y/Z section sliders, edges toggle, named views.
+
 ## 0.3.0 (2026-09-13)
 
 - Assemblies positioned by **mates**: `coaxial`, `against`, `flush`, `parallel` between faces of

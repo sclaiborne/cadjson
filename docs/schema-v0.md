@@ -399,7 +399,9 @@ Results go to `report.json` under `assembly` and to the build summary.
     "title_block": { "title": "Board", "number": "CG-001", "revision": "A",
                      "material": "PLA", "tolerance": "ISO 2768-m", "drawn_by": "", "company": "" }
   },
-  "png": true                    // line-art preview per view and per section
+  "png": true,                   // line-art preview per view and per section
+  "viewer": false                // <name>.html: the model in the browser (three.js from a CDN), one colour per
+                                 // placed part with hide/show, section sliders; `cadjson view` builds and opens it
 }
 ```
 

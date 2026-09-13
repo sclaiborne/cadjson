@@ -481,7 +481,8 @@ _DOC_OF: dict[int, Document] = {}  # id(builder) -> document, so part refs resol
 
 
 def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = None, stl: bool | None = None,
-                  png: bool | None = None, views: list[str] | None = None, sheet: bool | None = None) -> list[Path]:
+                  png: bool | None = None, views: list[str] | None = None, sheet: bool | None = None,
+                  viewer: bool | None = None) -> list[Path]:
     """Write the outputs requested by the document, with optional CLI overrides."""
     doc, part = result.document, result.part
     out = doc.outputs
@@ -548,6 +549,14 @@ def write_outputs(result: BuildResult, out_dir: Path, *, step: bool | None = Non
             if not svg.exists():
                 export.write_view_svg(part, view, svg, True, 1.0)
             files.append(export.svg_to_png(svg, out_dir / f"{name}_{view}.png"))
+
+    if viewer if viewer is not None else out.viewer:
+        from cadjson.viewer import write_viewer
+
+        pieces = None
+        if result.assembly:
+            pieces = [(s.label, s) for s in part.children]
+        files.append(write_viewer(part, out_dir / f"{name}.html", tol, ang, name=name, pieces=pieces))
 
     from cadjson.report import write_report
 
