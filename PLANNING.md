@@ -289,4 +289,94 @@ See `docs/fusion-export.md`.
       dynamic Document model; `cadjson plugins`; `cadjson schema --with-plugins`; FeatureAPI
 - [x] example plugin `examples/plugins/cadjson_gear`; example variant `board_profile_long`
 - [ ] pluggable sketch shapes and selectors
-- [ ] `cadjson compare` reference in variants; `cadjson init` for a parts repo; `revision` field
+- [x] `cadjson init` for a parts repo (skill ships in the package)
+- [ ] `cadjson compare` reference in variants; `revision` field
+
+## 15. Prior art: text-to-cad / the `cadgen` package on PyPI (checked 2026-09-12)
+
+Found while checking PyPI for the original name. It is why this project is called cadjson.
+Facts below come from the wheel (`cadgen 0.5.1`), the repository tree, its README and its
+CAD skill file, not from marketing copy.
+
+**What it is.** [earthtojake/text-to-cad](https://github.com/earthtojake/text-to-cad),
+"a library of agent skills for CAD, CAE and CAM". MIT. Created 2026-04-22; about 1,070
+commits, 15.5k stars, 1.6k forks, pushed the day this was written. One dominant author
+(about 80% of commits) plus a handful of contributors and a Claude bot account. Docs site,
+Discord, Claude Code and Codex plugin manifests. The `cadgen` PyPI package is its runtime
+(Python engine plus a bundled JavaScript viewer and mesh tools, 4.6 MB of built JS).
+
+**Source format: Python, not data.** A model is a plain build123d script with a decorator:
+
+```python
+from cadgen import build123d as bd
+from cadgen import step
+
+@step
+def bracket():
+    return bd.Box(WIDTH, 10, 10)
+```
+
+Their skill states "Generation has NO CLI": scripts are run, and every CLI verb takes a
+generated document (`.step`, `.stl`, `.dxf`), never source. Parameters are Python
+constants. Feature vocabulary is whatever build123d offers. Selectors are ordinal
+references into the built topology (`#o1.2.f1` = occurrence 1.2, face 1; `e3`; labels),
+used by the inspection and measurement tools; in source you use build123d selectors.
+
+**What they have that cadjson does not.**
+- Ten skills covering the whole pipeline: CAD, viewer, off-the-shelf STEP part sourcing
+  (`step.parts`), DXF cut layouts, URDF / SRDF / SDF robot descriptions, SendCutSend
+  pre-checks, printability analysis (wall thickness, overhangs, supports), G-code slicing.
+- Kinematics as data on a model (mates, couplings, poses) with a sidecar JSON, and
+  assemblies with build123d joints and named mating datums.
+- A local browser viewer (three.js), PNG snapshots through headless Chromium, `inspect`
+  with `refs / measure / align / frame / diff / validate` so the agent checks every
+  user-stated dimension numerically after the build, a content-addressed build store with
+  a freshness ledger (`store why`), a warm daemon so repeated builds skip the 2.5 s import,
+  byte-deterministic outputs, and a `doctor` that checks the installed runtime matches the
+  skill's pin.
+- Packaging for several agents at once: `npx skills add`, a Claude Code plugin marketplace,
+  Codex, Gemini and Grok manifests.
+- A large gallery of showcase models (F1 car, Falcon Heavy, tendon hand, W16 engine...).
+
+Their own stated limits: variants are separate model files sharing a factory function
+(decorators refuse parameter lists); no feature-type extension mechanism (skills may not
+import each other); a "no backwards compatibility" law with hard cutovers between minor
+versions (0.4 to 0.5 removed the generation CLI); no MCP server; no CAD-application
+integration of any kind. Their DXF skill says outright: no dimension lines, no title blocks,
+no PDF or SVG. Threads are not mentioned anywhere. The Hacker News discussion of the
+project centred on LLM spatial-reasoning mistakes such as overlapping features, which is
+the failure mode a validated feature tree with intent selectors is meant to reduce.
+
+**What cadjson has that they do not.**
+- The source is a documented data format with a JSON Schema, not code: named dimensions
+  in one block, a tiny expression grammar, intent selectors (`of`, `normal`, `parallel_to`,
+  `convex`), readable and editable by someone who does not write Python, and validated
+  before any geometry runs. `extends` variants and `drop`; plugins for new feature types.
+- Because the source is a feature tree: a Fusion 360 script that rebuilds the part with a
+  native parametric timeline and user parameters. Their STEP-first design cannot do this.
+- Engineering drawings: per-view hidden-line SVG/DXF, section views, and dimensioned
+  sheets with title blocks. Their DXF skill is for cut profiles, gaskets and templates; the
+  runtime's own docstring says the 2D drawing snapshot was removed in favour of a 3D render.
+- Standard thread tables in the format (`"standard": "M3", "fit": "tap"`) and real ISO thread
+  geometry as a feature; text as a sketch shape; `compare` against a reference mesh;
+  `export-python` to a standalone build123d script.
+- Roughly one day old, one author, about a hundred tests. Everything above is smaller and
+  less battle-tested than theirs.
+
+**Overlap.** Same kernel (build123d on OpenCascade), same audience (an agent in Claude Code
+writing parts), same outputs (STEP, STL, 3MF), same feedback loop (build, read a report,
+look at a PNG, fix, repeat), same idea of a shipped skill file.
+
+**What this means.** They are the strongest evidence yet for the "agents write code" side of
+the Phase 0 decision, and they have momentum. cadjson's reason to exist is the other side of
+that decision: the part file is data, so it can be diffed by dimension, validated by schema,
+edited without Python, and regenerated as a Fusion timeline. Positioning for the README, when
+it is written: not a competitor to text-to-cad's pipeline but a different source format with
+different guarantees. The two are complementary in one concrete way already:
+`cadjson export-python` emits a build123d script, and wrapping that in their `@step`
+decorator would feed a cadjson part into their viewer, inspection, printability and
+slicing skills. Worth an example, and possibly a `--text-to-cad` flag on `export-python`.
+
+**Ideas worth borrowing.** A warm process for repeated builds; a `doctor` that checks the
+installed version against the skill's pin; byte-deterministic STEP output so identical
+inputs give identical files; snapshot cameras and size profiles as named presets.
