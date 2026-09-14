@@ -33,9 +33,31 @@ BLOCK = {  # 40 x 40 x 25 block, a 6.2 mm socket 20 deep at (12, -12): its floor
 }
 
 
+PLATE = {  # 40 x 40 x 2 plate with a 10 x 10 x 1 pad on top. Two features, so the builder hands
+    # back a Solid (a one-feature part stays a Part), which matters for the intersect result type.
+    "schema": "cadjson/0.1", "name": "plate",
+    "features": [
+        {"id": "body", "type": "extrude", "distance": 2,
+         "sketch": {"plane": "XY", "shapes": [{"type": "rect", "w": 40, "h": 40}]}},
+        {"id": "pad", "type": "extrude", "distance": 1,
+         "sketch": {"plane": {"face": "top"}, "shapes": [{"type": "rect", "w": 10, "h": 10}]}},
+    ],
+}
+FORK = {  # two d = 4 legs 20 mm apart, z 0..20, joined by a bar across their tops: one solid
+    "schema": "cadjson/0.1", "name": "fork",
+    "features": [
+        {"id": "legs", "type": "extrude", "distance": 20,
+         "sketch": {"plane": "XY", "shapes": [{"type": "circle", "d": 4, "center": [-10, 0]},
+                                              {"type": "circle", "d": 4, "center": [10, 0]}]}},
+        {"id": "bar", "type": "extrude", "distance": 4,
+         "sketch": {"plane": {"base": "XY", "offset": 16}, "shapes": [{"type": "rect", "w": 24, "h": 4}]}},
+    ],
+}
+
+
 @pytest.fixture
 def lib(tmp_path):
-    for doc in (PEG, BLOCK):
+    for doc in (PEG, BLOCK, PLATE, FORK):
         (tmp_path / f"{doc['name']}.json").write_text(json.dumps(doc), encoding="utf-8")
     return tmp_path
 
@@ -199,6 +221,26 @@ def test_interference_is_reported_and_can_fail_the_build(lib):
     assert "overlap by" in res.summary()
     with pytest.raises(CadjsonError, match="block and peg overlap"):
         _assembly(lib, parts, checks={"interference": "error"})
+
+
+def test_interference_made_of_several_pieces_is_summed(lib):
+    # The fork's legs pass through the plate, so the overlap is two separate discs 2 mm thick.
+    # Solid & Solid with several pieces is a ShapeList in build123d (no .volume); it used to be
+    # reported as no overlap at all.
+    res = _assembly(lib, [{"file": "plate.json"}, {"file": "fork.json", "at": [0, 0, -5]}])
+    hit = res.assembly["interference"]
+    assert hit and hit[0]["between"] == ["plate", "fork"]
+    assert hit[0]["volume_mm3"] == pytest.approx(2 * math.pi * 4 * 2, rel=1e-3)
+
+
+def test_volume_of_shape_lists_and_empty_results():
+    from build123d import Box, Pos, ShapeList
+
+    from cadjson.assembly import _volume
+
+    a, b = Box(2, 2, 2), Pos(10, 0, 0) * Box(2, 2, 2)
+    assert _volume(ShapeList([a, b])) == pytest.approx(16)
+    assert _volume([]) == 0 and _volume(None) == 0
 
 
 def test_clearance_check(lib):
