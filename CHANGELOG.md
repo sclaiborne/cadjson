@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fix: the assembly interference check missed overlaps made of several separate pieces (four
+  bosses through a cover plate). build123d returns such an intersection as a `ShapeList`, which
+  has no `.volume`; the check swallowed the error and reported no overlap. The volume is now the
+  sum over every piece, and a boolean that fails is reported as an error naming the two parts
+  instead of being silently treated as no overlap.
+
 ## 0.3.2 (2026-09-13)
 
 - Viewer: hidden-lines mode (edges behind material drawn dashed), x-ray, part checkboxes with

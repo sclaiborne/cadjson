@@ -311,10 +311,15 @@ def solve_mates(pose: Pose, name: str, mates, select_this, targets, ctx: Context
 
 
 def _volume(shape) -> float:
-    try:
-        return float(shape.volume) if shape is not None else 0.0
-    except Exception:  # an empty result from OCC is not always None
+    """Volume of a boolean result. build123d hands back a Solid, a Compound, a ShapeList of
+    disjoint pieces (four bosses through one plate) or None; faces and edges count as 0."""
+    if shape is None:
         return 0.0
+    if isinstance(shape, (list, tuple)):
+        return sum(_volume(s) for s in shape)
+    if getattr(shape, "wrapped", None) is None:  # an empty result from OCC is not always None
+        return 0.0
+    return float(shape.volume)
 
 
 def run_checks(placed: list[tuple[str, Shape]], checks, ctx: Context) -> dict:
@@ -327,8 +332,9 @@ def run_checks(placed: list[tuple[str, Shape]], checks, ctx: Context) -> dict:
                 (na, a), (nb, b) = placed[i], placed[j]
                 try:
                     vol = _volume(a.intersect(b))
-                except Exception:
-                    vol = 0.0
+                except Exception as exc:  # a failed boolean is a real error, not "no overlap"
+                    raise CadjsonError(f"interference check between {na} and {nb} failed: {exc}", "checks",
+                                       ["set checks.interference to 'off' to skip the check"]) from exc
                 if vol > 1e-3:
                     out["interference"].append({"between": [na, nb], "volume_mm3": round(vol, 4)})
     if checks:
